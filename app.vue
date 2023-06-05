@@ -8,45 +8,41 @@
 const { $io } = useNuxtApp();
 
 async function play() {
-	$io.emit("songRequest", "https://www.youtube.com/watch?v=ox4tmEV6-QU");
-
-	const bufferChunks: ArrayBuffer[] = [];
 	const audio = document.getElementById("testaudio") as HTMLAudioElement;
 	audio.volume = 0.5;
-	const songMetadata = ref({});
-	const playableBlob = ref<Blob>();
+	const songMetadata = ref();
+
+	const bufferQueue: ArrayBuffer[] = [];
+	const mediaSource = new MediaSource();
+	let sourceBuffer: SourceBuffer;
+	mediaSource.addEventListener("sourceopen", () => {
+		sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs="opus"');
+		sourceBuffer.mode = "sequence";
+
+		$io.emit("songRequest", "https://www.youtube.com/watch?v=ox4tmEV6-QU");
+
+		sourceBuffer.addEventListener("update", () => {
+			if (audio.paused && audio.currentTime === 0) {
+				audio.play();
+			}
+
+			if (bufferQueue.length > 0 && !sourceBuffer.updating) {
+				sourceBuffer.appendBuffer(bufferQueue.shift()!);
+			}
+		});
+	});
+	audio.src = URL.createObjectURL(mediaSource);
+
+	$io.on("songData", async (data: ArrayBuffer) => {
+		if (sourceBuffer.updating || bufferQueue.length > 0) {
+			bufferQueue.push(data);
+		} else {
+			sourceBuffer.appendBuffer(data);
+		}
+	});
 
 	$io.on("songMetadata", (data) => {
 		songMetadata.value = data;
 	});
-
-	$io.on("songData", (data) => {
-		bufferChunks.push(data);
-
-		if (bufferChunks.length === 5) {
-			const blob = new Blob(bufferChunks);
-			const chunkDuration = getDuration(bufferChunks, songMetadata.value);
-			const url = URL.createObjectURL(blob);
-			audio.src = url;
-			audio.play();
-
-			audio.addEventListener("ended", () => {
-				const blob = new Blob(bufferChunks);
-				const url = URL.createObjectURL(blob);
-				audio.src = url;
-				audio.currentTime = chunkDuration;
-				audio.play();
-			});
-
-			audio.addEventListener("error", () => {
-				URL.revokeObjectURL(url);
-			});
-		}
-	});
 }
-
-const getDuration = (chunks: ArrayBuffer[], songMetadata: any) => {
-	const chunkSize = chunks.map((chunk) => chunk.byteLength);
-	return (chunkSize.reduce((a, b) => a + b) * 8) / songMetadata.bitrate;
-};
 </script>
