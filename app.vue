@@ -7,14 +7,18 @@
 <script setup lang="ts">
 const { $io } = useNuxtApp();
 
+let sourceBuffer: SourceBuffer;
+let bufferQueue: ArrayBuffer[] = [];
+const songMetadata = ref();
+
 async function play() {
+	sourceBuffer?.abort();
+	bufferQueue = [];
+
 	const audio = document.getElementById("testaudio") as HTMLAudioElement;
 	audio.volume = 0.5;
-	const songMetadata = ref();
 
-	const bufferQueue: ArrayBuffer[] = [];
 	const mediaSource = new MediaSource();
-	let sourceBuffer: SourceBuffer;
 	mediaSource.addEventListener("sourceopen", () => {
 		sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs="opus"');
 		sourceBuffer.mode = "sequence";
@@ -32,7 +36,9 @@ async function play() {
 		});
 	});
 	audio.src = URL.createObjectURL(mediaSource);
+}
 
+onMounted(() => {
 	$io.on("songData", async (data: ArrayBuffer) => {
 		if (sourceBuffer.updating || bufferQueue.length > 0) {
 			bufferQueue.push(data);
@@ -44,5 +50,5 @@ async function play() {
 	$io.on("songMetadata", (data) => {
 		songMetadata.value = data;
 	});
-}
+});
 </script>
