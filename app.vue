@@ -1,7 +1,10 @@
 <template>
-	<div>hi</div>
-	<button @click="play">test</button>
-	<audio id="testaudio" controls preload="none"></audio>
+	<!-- <button @click="play">test</button> -->
+	<queue-section></queue-section>
+	<song-section></song-section>
+	<div class="player-section">
+		<audio id="audio" controls preload="none" style="display: none"></audio>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -15,7 +18,7 @@ async function play() {
 	sourceBuffer?.abort();
 	bufferQueue = [];
 
-	const audio = document.getElementById("testaudio") as HTMLAudioElement;
+	const audio = document.getElementById("audio") as HTMLAudioElement;
 	audio.volume = 0.5;
 
 	const mediaSource = new MediaSource();
@@ -52,3 +55,38 @@ onMounted(() => {
 	});
 });
 </script>
+
+<style>
+body {
+	background-color: black;
+	color: white;
+	user-select: none;
+}
+
+.player-section {
+	position: absolute;
+	bottom: 50px;
+	right: 50px;
+	height: 100px;
+	width: calc(100vw / 2 - 75px);
+	border: 1px solid white;
+	border-radius: 20px;
+}
+
+::-webkit-scrollbar {
+	width: 7px;
+	height: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	background: black;
+	border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	background: white;
+	border-radius: 10px;
+}
+</style>
