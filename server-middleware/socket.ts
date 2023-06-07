@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import ytdl from "ytdl-core";
+import ytsr from "ytsr";
 
 const io = new Server(3003, {
 	cors: {
@@ -9,6 +10,23 @@ const io = new Server(3003, {
 
 io.on("connection", async (socket) => {
 	console.log("Connection", socket.id);
+
+	socket.on("songSearch", async (query: string) => {
+		const searchResults = await ytsr(query, { limit: 15 });
+		socket.emit(
+			"songSearchResults",
+			searchResults.items
+				.filter((item) => item.type === "video")
+				.map((item) => ({
+					artist: item.type === "video" ? item.author?.name : "Unknown",
+					duration: item.type === "video" ? item.duration : "00:00",
+					thumbnail: item.type === "video" ? item.bestThumbnail.url : "",
+					title: item.type === "video" ? item.title : "Unknown",
+					url: item.type === "video" ? item.url : "",
+					views: item.type === "video" ? item.views : 0,
+				}))
+		);
+	});
 
 	socket.on("songRequest", async (url: string) => {
 		const songData = await ytdl.getInfo(url);
@@ -22,7 +40,7 @@ io.on("connection", async (socket) => {
 
 	socket.on("disconnecting", () => {
 		console.log("disconnected", socket.id);
-		socket.broadcast.emit("message", `${socket.id} left`);
+		// socket.broadcast.emit("message", `${socket.id} left`);
 	});
 });
 
