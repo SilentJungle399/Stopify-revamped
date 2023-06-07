@@ -6,4 +6,5 @@ export default defineNuxtConfig({
 			handler: "~/server-middleware/socket",
 		},
 	],
+	modules: ["@pinia/nuxt"],
 });
