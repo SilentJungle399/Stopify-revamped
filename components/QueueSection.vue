@@ -31,7 +31,7 @@ main {
 	position: absolute;
 	top: 50px;
 	left: 50px;
-	height: calc(100vh - 100px);
+	height: calc(100vh - 225px);
 	width: calc(100vw / 2 - 75px);
 }
 
@@ -66,7 +66,7 @@ button:hover {
 
 .display-area {
 	position: absolute;
-	height: calc(100vh - 150px);
+	height: calc(100vh - 275px);
 	width: calc(100vw / 2 - 75px);
 	border: 1px solid white;
 	border-radius: 20px;
