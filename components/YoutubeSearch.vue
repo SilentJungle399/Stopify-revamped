@@ -6,7 +6,7 @@
 		placeholder="Enter song name or YouTube URL"
 	/>
 	<div class="results-section">
-		<div class="youtube-result" v-for="song in songResults" @click="add(song)">
+		<div class="youtube-result" v-for="song in songResults" @click="() => add(song)">
 			<div class="youtube-result-thumbnail">
 				<img :src="song.thumbnail" />
 			</div>
