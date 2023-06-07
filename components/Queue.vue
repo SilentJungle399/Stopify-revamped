@@ -28,7 +28,7 @@
 import { useQueue } from "~/store";
 
 const queueData = useQueue();
-const queue = computed(() => queueData.queue);
+const queue = computed(() => queueData.queue.slice(1));
 </script>
 
 <style>
