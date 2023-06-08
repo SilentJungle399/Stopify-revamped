@@ -30,7 +30,12 @@ export default defineStore("queue", () => {
 		if (index > -1) queue.value.splice(index, 1);
 	};
 	const current = () => queue.value[0];
-	const next = () => queue.value.shift();
+	const next = () => {
+		queue.value.shift();
+		if (queue.value.length > 0) {
+			play(queue.value[0].url);
+		}
+	};
 	const clear = () => queue.value.splice(0, queue.value.length);
 
 	return { queue, add, remove, current, next, clear };

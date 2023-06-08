@@ -50,7 +50,9 @@
 					<span class="material-symbols-outlined"> skip_next </span>
 				</div>
 			</div>
-			<div class="seekbar"></div>
+			<div class="seekbar">
+				<div class="progress" id="progress"></div>
+			</div>
 		</div>
 		<audio id="audio" controls preload="none" style="display: none"></audio>
 	</div>
@@ -74,6 +76,10 @@ onMounted(() => {
 
 	$io.on("songData", async (data: ArrayBuffer) => {
 		buffer.add(data);
+	});
+
+	$io.on("songEnd", () => {
+		console.log("song ended");
 	});
 });
 </script>
@@ -143,9 +149,18 @@ body {
 .seekbar {
 	width: 500px;
 	height: 3px;
-	background-color: white;
+	border: 0.5px solid white;
 	border-radius: 10px;
 	margin: auto;
+}
+
+.progress {
+	display: block;
+	width: 0%;
+	height: 100%;
+	background: white;
+	border-radius: 10px;
+	transition: width 0.1s ease-in-out;
 }
 
 ::-webkit-scrollbar {

@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { useQueue } from ".";
 
 export default defineStore("player", () => {
 	const audio = ref<HTMLAudioElement | null>(null);
@@ -10,6 +11,26 @@ export default defineStore("player", () => {
 	const setAudio = (element: HTMLAudioElement) => {
 		audio.value = element;
 		element.volume = 0.5;
+		const queue = useQueue();
+
+		const seekbar = document.getElementById("progress") as HTMLInputElement;
+		var timeout: NodeJS.Timeout;
+		element.addEventListener("timeupdate", () => {
+			seekbar.style.width = `${(element.currentTime / element.duration) * 100}%`;
+			if (audio.value?.duration! - audio.value?.currentTime! < 0.5) {
+				if (timeout) clearTimeout(timeout);
+				timeout = setTimeout(() => {
+					queue.next();
+					console.log("Next song");
+				}, 1000);
+			}
+		});
+		element.addEventListener("pause", () => {
+			playing.value = false;
+		});
+		element.addEventListener("play", () => {
+			playing.value = true;
+		});
 	};
 
 	const play = () => {
