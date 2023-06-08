@@ -2,8 +2,10 @@ import { defineStore } from "pinia";
 import { usePlayer } from ".";
 
 export default defineStore("buffer", () => {
+	const currentId = ref<string>();
 	const sourceBuffer = ref<SourceBuffer>();
 	const bufferQueue = ref<ArrayBuffer[]>([]);
+	const { $io } = useNuxtApp();
 
 	const setBuffer = (buffer: SourceBuffer) => {
 		sourceBuffer.value = buffer;
@@ -23,7 +25,7 @@ export default defineStore("buffer", () => {
 		});
 	};
 
-	const add = (data: ArrayBuffer) => {
+	const add = (data: ArrayBuffer, id: string) => {
 		if (sourceBuffer.value?.updating || bufferQueue.value.length > 0) {
 			bufferQueue.value.push(data);
 		} else {
@@ -31,10 +33,21 @@ export default defineStore("buffer", () => {
 		}
 	};
 
-	const clean = () => {
-		bufferQueue.value = [];
-		sourceBuffer.value?.abort();
+	const setId = (id: string) => {
+		currentId.value = id;
 	};
 
-	return { sourceBuffer, add, setBuffer, clean };
+	const clean = () => {
+		bufferQueue.value = [];
+		// sourceBuffer.value?.abort();
+		currentId.value = undefined;
+		const player = usePlayer();
+		const audio = computed(() => player.audio);
+		if (audio.value) {
+			audio.value.pause();
+			audio.value.currentTime = 0;
+		}
+	};
+
+	return { sourceBuffer, add, setBuffer, clean, setId, currentId };
 });

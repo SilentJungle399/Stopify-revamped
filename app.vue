@@ -1,5 +1,4 @@
 <template>
-	<!-- <button @click="play">test</button> -->
 	<queue-section></queue-section>
 	<song-section></song-section>
 	<div class="player-section">
@@ -26,14 +25,16 @@
 		<div class="audio-controls">
 			<div class="controls">
 				<div class="control previous">
-					<span class="material-symbols-outlined"> skip_previous </span>
+					<span class="material-symbols-outlined" @click="queueData.previous">
+						skip_previous
+					</span>
 				</div>
 				<div class="control playpause">
 					<span
 						class="material-symbols-outlined"
 						style="font-size: 45px"
 						v-if="playing"
-						@click="() => player.pause()"
+						@click="player.pause"
 					>
 						pause_circle
 					</span>
@@ -41,13 +42,15 @@
 						class="material-symbols-outlined"
 						style="font-size: 45px"
 						v-else
-						@click="() => player.play()"
+						@click="player.play"
 					>
 						play_circle
 					</span>
 				</div>
 				<div class="control skip">
-					<span class="material-symbols-outlined"> skip_next </span>
+					<span class="material-symbols-outlined" @click="queueData.next">
+						skip_next
+					</span>
 				</div>
 			</div>
 			<div class="seekbar">
@@ -70,16 +73,16 @@ const buffer = useBuffer();
 const current = computed(() => queueData.current());
 const audio = computed(() => player.audio);
 const playing = computed(() => player.playing);
+const currentId = computed(() => buffer.currentId);
 
 onMounted(() => {
 	player.setAudio(document.getElementById("audio") as HTMLAudioElement);
-
-	$io.on("songData", async (data: ArrayBuffer) => {
-		buffer.add(data);
-	});
-
-	$io.on("songEnd", () => {
-		console.log("song ended");
+	$io.on("songMetadata", (data) => {
+		buffer.setId(data.id);
+		$io.on(`songData-${data.id}`, async (data: any) => {
+			if (data.id !== currentId.value) return;
+			buffer.add(data.chunk, data.id);
+		});
 	});
 });
 </script>

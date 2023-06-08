@@ -20,8 +20,8 @@ export default defineStore("player", () => {
 			if (audio.value?.duration! - audio.value?.currentTime! < 0.5) {
 				if (timeout) clearTimeout(timeout);
 				timeout = setTimeout(() => {
+					element.pause();
 					queue.next();
-					console.log("Next song");
 				}, 1000);
 			}
 		});
