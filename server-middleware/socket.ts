@@ -1,12 +1,18 @@
 import { Server } from "socket.io";
-import ytdl from "ytdl-core";
 import ytsr from "ytsr";
+import fetch from "node-fetch";
+import clientPromise from "~/utils/mongo";
+import { ObjectId } from "bson";
 
 const io = new Server(3003, {
 	cors: {
 		origin: "*",
 	},
 });
+
+const clientId = "900755240532471888";
+const secret = "Lc6ZR4dS759vhgfGkEy3daLuHhH9FqiS";
+const redirectUri = "http://localhost:3000/api/callback";
 
 io.on("connection", async (socket) => {
 	console.log("Connection", socket.id);
@@ -28,27 +34,41 @@ io.on("connection", async (socket) => {
 		);
 	});
 
-	socket.on("songRequest", async (url: string) => {
-		const songData = await ytdl.getInfo(url);
-		const formats = ytdl.filterFormats(songData.formats, "audioonly");
-		const audioFormat = ytdl.chooseFormat(formats, { quality: "highestaudio" });
+	socket.on("validateLogin", async (code: string, callback) => {
+		const API_ENDPOINT = "https://discord.com/api/v10";
+		const data = (await (
+			await fetch(`${API_ENDPOINT}/oauth2/token`, {
+				method: "POST",
+				body: new URLSearchParams({
+					client_id: clientId,
+					client_secret: secret,
+					grant_type: "authorization_code",
+					redirect_uri: redirectUri,
+					code,
+				}),
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+			})
+		).json()) as TokenResponse;
 
-		const key = songData.videoDetails.videoId + Date.now();
+		const user: any = await (
+			await fetch(`${API_ENDPOINT}/users/@me`, {
+				headers: {
+					authorization: `${data.token_type} ${data.access_token}`,
+				},
+			})
+		).json();
 
-		socket.emit("songMetadata", { audioFormat, id: key });
-
-		const stream = ytdl.downloadFromInfo(songData, { format: audioFormat });
-
-		var prep20Chunk: Buffer[] = [];
-		for await (const chunk of stream) {
-			prep20Chunk.push(chunk);
-			if (prep20Chunk.length === 10) {
-				socket.emit(`songData-${key}`, { chunk: Buffer.concat(prep20Chunk), id: key });
-				prep20Chunk = [];
-			}
-		}
-		if (prep20Chunk.length > 0) {
-			socket.emit(`songData-${key}`, { chunk: Buffer.concat(prep20Chunk), id: key });
+		const db = (await clientPromise).db();
+		const users = db.collection("users");
+		const userExists = await users.findOne({ id: user.id });
+		if (!userExists) {
+			const doc = await users.insertOne(user);
+			callback(doc.insertedId.toString());
+		} else {
+			await users.updateOne({ _id: new ObjectId(userExists._id) }, { $set: user });
+			callback(userExists._id.toString());
 		}
 	});
 
