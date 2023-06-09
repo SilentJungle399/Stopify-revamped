@@ -17,6 +17,7 @@
 		</button>
 		<div class="display-area">
 			<YoutubeSearch v-if="page === 'youtube'"></YoutubeSearch>
+			<ChatArea v-if="page === 'chat'"></ChatArea>
 		</div>
 	</main>
 </template>
