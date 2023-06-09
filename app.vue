@@ -1,7 +1,8 @@
 <template>
 	<queue-section></queue-section>
-	<song-section></song-section>
+	<other-section></other-section>
 	<div class="player-section">
+		<div id="player" style="display: none"></div>
 		<div class="song-details" v-if="current">
 			<img :src="current.thumbnail" alt="" />
 			<div class="song-description">
@@ -57,33 +58,45 @@
 				<div class="progress" id="progress"></div>
 			</div>
 		</div>
-		<audio id="audio" controls preload="none" style="display: none"></audio>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { useQueue, usePlayer, useBuffer } from "~/store";
-
-const { $io } = useNuxtApp();
+import { useQueue, usePlayer } from "~/store";
 
 const queueData = useQueue();
 const player = usePlayer();
-const buffer = useBuffer();
 
 const current = computed(() => queueData.current());
-const audio = computed(() => player.audio);
 const playing = computed(() => player.playing);
-const currentId = computed(() => buffer.currentId);
+
+const onYouTubeIframeAPIReady = () => {
+	console.log("hi");
+	player.setYTplayer(
+		// @ts-ignore
+		new YT.Player("player", {
+			height: "600",
+			width: "600",
+			playerVars: {
+				autoplay: 1,
+				controls: 0,
+				autohide: 1,
+				wmode: "opaque",
+				origin: "http://localhost:3000",
+			},
+			events: player.events,
+		})
+	);
+};
 
 onMounted(() => {
-	player.setAudio(document.getElementById("audio") as HTMLAudioElement);
-	$io.on("songMetadata", (data) => {
-		buffer.setId(data.id);
-		$io.on(`songData-${data.id}`, async (data: any) => {
-			if (data.id !== currentId.value) return;
-			buffer.add(data.chunk, data.id);
-		});
-	});
+	// @ts-ignore
+	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+	const scriptTag = document.createElement("script");
+	scriptTag.src = "https://www.youtube.com/iframe_api";
+	const firstScriptTag = document.getElementsByTagName("script")[0];
+	firstScriptTag.parentNode?.insertBefore(scriptTag, firstScriptTag);
 });
 </script>
 

@@ -2,76 +2,100 @@ import { defineStore } from "pinia";
 import { useQueue } from ".";
 
 export default defineStore("player", () => {
-	const audio = ref<HTMLAudioElement | null>(null);
+	const YTplayer = ref<any>(undefined);
 	const playing = ref(false);
-	const loading = ref(false);
-	const progress = ref(0);
-	const duration = ref(0);
 
-	const setAudio = (element: HTMLAudioElement) => {
-		audio.value = element;
-		element.volume = 0.5;
-		const queue = useQueue();
+	const events = {
+		onStateChange: (event: any) => {
+			// -1 (unstarted)
+			// 0 (ended)
+			// 1 (playing)
+			// 2 (paused)
+			// 3 (buffering)
+			// 5 (video cued)
+
+			switch (event.data) {
+				case 0:
+					const queue = useQueue();
+					playing.value = false;
+					queue.next();
+					break;
+				case 1:
+					playing.value = true;
+					break;
+				case 2:
+					playing.value = false;
+					break;
+				default:
+					break;
+			}
+		},
+	};
+
+	const setYTplayer = (player: any) => {
+		if (YTplayer.value) return;
+		YTplayer.value = player;
 
 		const seekbar = document.getElementById("progress") as HTMLInputElement;
-		var timeout: NodeJS.Timeout;
-		element.addEventListener("timeupdate", () => {
-			seekbar.style.width = `${(element.currentTime / element.duration) * 100}%`;
-			if (audio.value?.duration! - audio.value?.currentTime! < 0.5) {
-				if (timeout) clearTimeout(timeout);
-				timeout = setTimeout(() => {
-					element.pause();
-					queue.next();
-				}, 1000);
+		setInterval(() => {
+			if (YTplayer.value.getCurrentTime) {
+				const currentPos = YTplayer.value.getCurrentTime();
+				const duration = YTplayer.value.getDuration();
+				seekbar.style.width = `${(currentPos / duration) * 100}%`;
 			}
-		});
-		element.addEventListener("pause", () => {
-			playing.value = false;
-		});
-		element.addEventListener("play", () => {
-			playing.value = true;
-		});
+		}, 100);
 	};
 
 	const play = () => {
-		if (audio.value) {
-			audio.value.play();
+		const queue = useQueue();
+		const current = computed(() => queue.current());
+		if (YTplayer.value && current.value) {
+			YTplayer.value.playVideo();
 			playing.value = true;
 		}
 	};
 	const pause = () => {
-		if (audio.value) {
-			audio.value.pause();
+		if (YTplayer.value) {
+			YTplayer.value.pauseVideo();
 			playing.value = false;
 		}
 	};
+	const stop = () => {
+		if (YTplayer.value) {
+			YTplayer.value.stopVideo();
+			playing.value = false;
+			const seekbar = document.getElementById("progress") as HTMLInputElement;
+			seekbar.style.width = `0%`;
+		}
+	};
 	const seek = (time: number) => {
-		if (audio.value) {
-			audio.value.currentTime = time;
+		if (YTplayer.value) {
+			YTplayer.value.seekTo(time, true);
 		}
 	};
 	const setVolume = (volume: number) => {
-		if (audio.value) {
-			audio.value.volume = volume;
+		if (YTplayer.value) {
+			YTplayer.value.setVolume(volume);
 		}
 	};
-	const setSource = (source: string) => {
-		if (audio.value) {
-			audio.value.src = source;
+	const loadVideoByUrl = (url: string) => {
+		if (YTplayer.value) {
+			YTplayer.value.loadVideoByUrl(
+				`http://www.youtube.com/v/${url.split("?v=")[1]}?version=3`
+			);
 		}
 	};
 
 	return {
-		audio,
+		YTplayer,
 		playing,
-		loading,
-		progress,
-		duration,
 		play,
 		pause,
 		seek,
 		setVolume,
-		setAudio,
-		setSource,
+		setYTplayer,
+		events,
+		stop,
+		loadVideoByUrl,
 	};
 });
