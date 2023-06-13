@@ -42,6 +42,8 @@ export default defineStore("player", () => {
 				const currentPos = YTplayer.value.getCurrentTime();
 				const duration = YTplayer.value.getDuration();
 				seekbar.style.width = `${(currentPos / duration) * 100}%`;
+			} else {
+				seekbar.style.width = `0%`;
 			}
 		}, 100);
 	};

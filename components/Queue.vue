@@ -31,7 +31,7 @@ const queueData = useQueue();
 const queue = computed(() => queueData.queue.slice(1));
 </script>
 
-<style>
+<style scoped>
 .results-section {
 	display: flex;
 	width: 100%;

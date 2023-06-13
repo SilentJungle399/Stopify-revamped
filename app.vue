@@ -62,16 +62,21 @@
 </template>
 
 <script setup lang="ts">
-import { useQueue, usePlayer } from "~/store";
+import { useQueue, usePlayer, useChat, useUsers, useAuth } from "~/store";
+import callback from "./server/api/callback";
+
+const { $io } = useNuxtApp();
 
 const queueData = useQueue();
 const player = usePlayer();
+const chat = useChat();
+const users = useUsers();
+const auth = useAuth();
 
 const current = computed(() => queueData.current());
 const playing = computed(() => player.playing);
 
 const onYouTubeIframeAPIReady = () => {
-	console.log("hi");
 	player.setYTplayer(
 		// @ts-ignore
 		new YT.Player("player", {
@@ -97,6 +102,43 @@ onMounted(() => {
 	scriptTag.src = "https://www.youtube.com/iframe_api";
 	const firstScriptTag = document.getElementsByTagName("script")[0];
 	firstScriptTag.parentNode?.insertBefore(scriptTag, firstScriptTag);
+
+	chat.loadMessages();
+	$io.on("newIncomingMessage", (message: any) => {
+		chat.addMessage(message);
+	});
+
+	const token = localStorage.getItem("token");
+	$io.emit("validateToken", token, (user: UserData | null) => {
+		if (token && user) {
+			auth.setAuth({ token, user });
+			users.addKnownUser(user);
+		} else if (!user) {
+			users.addAnonUser();
+		}
+	});
+
+	$io.on("userJoin", (user: UserData | null) => {
+		user ? users.addKnownUser(user) : users.addAnonUser();
+	});
+
+	$io.on("userLeave", (user: string | null) => {
+		user ? users.removeKnownUser(user) : users.removeAnonUser();
+	});
+
+	$io.emit(
+		"roomUsersRequest",
+		({ userlist, anonUsers }: { userlist: UserData[]; anonUsers: number }) => {
+			userlist.forEach((user) => {
+				users.addKnownUser(user);
+			});
+			users.addAnonUser(anonUsers);
+		}
+	);
+
+	setInterval(() => {
+		chat.reorder();
+	}, 5000);
 });
 </script>
 

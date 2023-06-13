@@ -9,3 +9,11 @@ interface TokenResponse {
 	refresh_token: string;
 	scope: string;
 }
+
+interface UserData {
+	id: string;
+	username: string;
+	avatar: string;
+	discriminator: string;
+	global_name: string;
+}

@@ -9,9 +9,13 @@ interface Song {
 	id: string;
 }
 
-interface User {
+interface PartialMessage {
+	content: string;
+}
+
+interface Message extends PartialMessage {
 	id: string;
-	username: string;
-	pfp: string;
-	token: string;
+	content: string;
+	timestamp: number;
+	user: UserData;
 }

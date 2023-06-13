@@ -18,6 +18,7 @@
 		<div class="display-area">
 			<YoutubeSearch v-if="page === 'youtube'"></YoutubeSearch>
 			<ChatArea v-if="page === 'chat'"></ChatArea>
+			<UserList v-if="page === 'users'"></UserList>
 		</div>
 	</main>
 </template>
