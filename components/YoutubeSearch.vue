@@ -6,7 +6,11 @@
 		placeholder="Enter song name or YouTube URL"
 	/>
 	<div class="results-section">
-		<div class="youtube-result" v-for="song in songResults" @click="() => add(song)">
+		<div
+			class="youtube-result"
+			v-for="song in songResults"
+			@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
+		>
 			<div class="youtube-result-thumbnail">
 				<img :src="song.thumbnail" />
 			</div>
@@ -19,11 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { useQueue } from "~/store";
+import { useAuth } from "~/store";
 
 const { $io } = useNuxtApp();
+const auth = useAuth();
 
-const { add } = useQueue();
+const token = computed(() => auth.token);
+
 const songInput = ref("");
 const songResults = ref<Song[]>([]);
 

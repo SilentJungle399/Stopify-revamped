@@ -1,7 +1,9 @@
 import { defineStore } from "pinia";
-import { useQueue } from ".";
+import { useQueue, useAuth } from ".";
 
 export default defineStore("player", () => {
+	const { $io } = useNuxtApp();
+
 	const YTplayer = ref<any>(undefined);
 	const playing = ref(false);
 
@@ -16,20 +18,32 @@ export default defineStore("player", () => {
 
 			switch (event.data) {
 				case 0:
-					const queue = useQueue();
+					const auth = useAuth();
+					const token = computed(() => auth.token);
 					playing.value = false;
-					queue.next();
+					$io.emit("queueUpdate", "nextSong", token.value);
 					break;
 				case 1:
 					playing.value = true;
+					console.log("started");
 					break;
 				case 2:
 					playing.value = false;
+					break;
+				case 3:
+					console.log("buffering");
 					break;
 				default:
 					break;
 			}
 		},
+	};
+
+	const currentTime = (): number => {
+		if (YTplayer.value && YTplayer.value.getCurrentTime) {
+			return YTplayer.value.getCurrentTime();
+		}
+		return 0;
 	};
 
 	const setYTplayer = (player: any) => {
@@ -48,42 +62,67 @@ export default defineStore("player", () => {
 		}, 100);
 	};
 
-	const play = () => {
+	const play = (e: PointerEvent | undefined, sync: boolean = false) => {
 		const queue = useQueue();
 		const current = computed(() => queue.current());
 		if (YTplayer.value && current.value) {
 			YTplayer.value.playVideo();
+			if (!sync) {
+				const auth = useAuth();
+				const token = computed(() => auth.token);
+				$io.emit("controlSong", token.value, true);
+			}
 			playing.value = true;
 		}
 	};
-	const pause = () => {
-		if (YTplayer.value) {
+	const pause = (e: PointerEvent | undefined, sync: boolean = false) => {
+		if (YTplayer.value && YTplayer.value.pauseVideo) {
 			YTplayer.value.pauseVideo();
+			if (!sync) {
+				const auth = useAuth();
+				const token = computed(() => auth.token);
+				$io.emit("controlSong", token.value, false);
+			}
 			playing.value = false;
 		}
 	};
-	const stop = () => {
-		if (YTplayer.value) {
+	const stop = (sync: boolean = false) => {
+		if (YTplayer.value && YTplayer.value.stopVideo) {
 			YTplayer.value.stopVideo();
+			if (!sync) {
+				const auth = useAuth();
+				const token = computed(() => auth.token);
+				$io.emit("stopSong", token.value);
+			}
 			playing.value = false;
 			const seekbar = document.getElementById("progress") as HTMLInputElement;
 			seekbar.style.width = `0%`;
 		}
 	};
-	const seek = (time: number) => {
-		if (YTplayer.value) {
+	const seek = (time: number, sync: boolean = false) => {
+		if (YTplayer.value && YTplayer.value.seekTo) {
 			YTplayer.value.seekTo(time, true);
+			if (!sync) {
+				const auth = useAuth();
+				const token = computed(() => auth.token);
+				$io.emit("seekSong", token.value, time);
+			}
 		}
 	};
-	const setVolume = (volume: number) => {
-		if (YTplayer.value) {
+	const setVolume = (volume: number, sync: boolean = false) => {
+		if (YTplayer.value && YTplayer.value.setVolume) {
 			YTplayer.value.setVolume(volume);
+			if (!sync) {
+				const auth = useAuth();
+				const token = computed(() => auth.token);
+				$io.emit("setSongVolume", token.value, volume);
+			}
 		}
 	};
-	const loadVideoByUrl = (url: string) => {
+	const loadVideoByUrl = (song: Song, sync: boolean = false) => {
 		if (YTplayer.value) {
 			YTplayer.value.loadVideoByUrl(
-				`http://www.youtube.com/v/${url.split("?v=")[1]}?version=3`
+				`http://www.youtube.com/v/${song.url.split("?v=")[1]}?version=3`
 			);
 		}
 	};
@@ -99,5 +138,6 @@ export default defineStore("player", () => {
 		events,
 		stop,
 		loadVideoByUrl,
+		currentTime,
 	};
 });

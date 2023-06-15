@@ -2,7 +2,10 @@
 	<div class="results-section">
 		<div class="queue-result" v-for="song in queue">
 			<div class="queue-result-thumbnail">
-				<button class="delete" @click="() => queueData.remove(song)">
+				<button
+					class="delete"
+					@click="() => $io.emit('queueUpdate', 'removeSong', token, song)"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						height="48"
@@ -18,17 +21,23 @@
 			</div>
 			<div class="queue-result-desc">
 				<div class="queue-result-title">{{ song.title }}</div>
-				<div class="queue-result-artist">{{ song.artist }} (Added by {{ "Silent" }})</div>
+				<div class="queue-result-artist">
+					{{ song.artist }} (Added by {{ user?.global_name }})
+				</div>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { useQueue } from "~/store";
+import { useAuth, useQueue } from "~/store";
 
+const { $io } = useNuxtApp();
+const auth = useAuth();
 const queueData = useQueue();
 const queue = computed(() => queueData.queue.slice(1));
+const token = computed(() => auth.token);
+const user = computed(() => auth.user);
 </script>
 
 <style scoped>

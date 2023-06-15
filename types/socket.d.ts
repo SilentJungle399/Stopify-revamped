@@ -17,3 +17,11 @@ interface UserData {
 	discriminator: string;
 	global_name: string;
 }
+
+interface PlayerState {
+	playing: boolean;
+	currentTime: number;
+	volume: number;
+	song: Song | null;
+	queue: Song[];
+}

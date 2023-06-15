@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import clientPromise from "~/utils/mongo";
 import { ObjectId } from "bson";
 import { DISCORD_SECRET } from "~/config";
+import whitelist from "./whitelist";
 
 const io = new Server(3003, {
 	cors: {
@@ -12,13 +13,42 @@ const io = new Server(3003, {
 });
 
 const clientId = "900755240532471888";
-const redirectUri = "http://localhost:3000/api/callback";
+
+const redirectUritest = "http://localhost:3000/api/callback";
+const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
 
 const sockConns = new Map<string, UserData>();
 var anonUsers = 0;
 
+const playerState: PlayerState = {
+	playing: false,
+	currentTime: 0,
+	volume: 100,
+	song: null,
+	queue: [],
+};
+
+const parseDuration = (duration: string) => {
+	const parts = duration.split(":");
+	return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+};
+
+setInterval(() => {
+	if (playerState.song && playerState.playing) {
+		playerState.currentTime += 0.5;
+		if (playerState.currentTime > parseDuration(playerState.song.duration)) {
+			playerState.currentTime = 0;
+			playerState.song = playerState.queue.shift() || null;
+		}
+	}
+}, 500);
+
 io.on("connection", async (socket) => {
 	console.log("Connection", socket.id);
+
+	setInterval(() => {
+		socket.emit("playerState", playerState);
+	}, 5000);
 
 	socket.on("songSearch", async (query: string) => {
 		const searchResults = await ytsr(query, { limit: 15 });
@@ -33,6 +63,7 @@ io.on("connection", async (socket) => {
 					title: item.type === "video" ? item.title : "Unknown",
 					url: item.type === "video" ? item.url : "",
 					views: item.type === "video" ? item.views : 0,
+					id: item.type === "video" ? item.id : "",
 				}))
 		);
 	});
@@ -46,7 +77,8 @@ io.on("connection", async (socket) => {
 					client_id: clientId,
 					client_secret: DISCORD_SECRET,
 					grant_type: "authorization_code",
-					redirect_uri: redirectUri,
+					redirect_uri:
+						process.env.NODE_ENV === "production" ? redirectUriprod : redirectUritest,
 					code,
 				}),
 				headers: {
@@ -81,9 +113,12 @@ io.on("connection", async (socket) => {
 			const doc = await users.insertOne(user);
 			callback({ data: retData, token: doc.insertedId.toString() });
 		} else {
+			console.log(userExists);
 			await users.updateOne({ _id: new ObjectId(userExists._id) }, { $set: user });
 			callback({ data: retData, token: userExists._id.toString() });
 		}
+		io.emit("userLeave", null);
+		io.emit("userJoin", retData);
 	});
 
 	socket.on("validateToken", async (token: string, callback) => {
@@ -170,13 +205,62 @@ io.on("connection", async (socket) => {
 		}
 	);
 
+	socket.on("controlSong", async (token: string, status: boolean) => {
+		playerState.playing = status;
+	});
+
+	socket.on("stopSong", async (token: string) => {
+		console.log("stopsong");
+		playerState.playing = false;
+		playerState.song = null;
+	});
+
+	socket.on("seekSong", async (token: string, time: number) => {
+		playerState.currentTime = time;
+	});
+
+	socket.on("setSongVolume", async (token: string, volume: number) => {
+		playerState.volume = volume;
+	});
+
+	socket.on(
+		"queueUpdate",
+		(event: "nextSong" | "removeSong" | "addSong", token: string, song: Song | null) => {
+			switch (event) {
+				case "nextSong":
+					playerState.queue.shift();
+					playerState.song = playerState.queue[0];
+					playerState.playing = playerState.song !== null;
+					playerState.currentTime = 0;
+
+					io.emit("playerState", playerState);
+					break;
+				case "removeSong":
+					playerState.queue = playerState.queue.filter((s) => s.id !== song?.id);
+					io.emit("playerState", playerState);
+					break;
+				case "addSong":
+					playerState.queue.push(song!);
+					if (playerState.queue.length === 1) {
+						playerState.song = song;
+						playerState.playing = true;
+						playerState.currentTime = 0;
+					}
+					io.emit("playerState", playerState);
+					break;
+				default:
+					break;
+			}
+		}
+	);
+
 	socket.on("disconnecting", () => {
 		console.log("disconnected", socket.id);
 		const user = sockConns.get(socket.id);
 		if (user) {
 			sockConns.delete(socket.id);
 		} else {
-			anonUsers--;
+			anonUsers > 0 ? anonUsers-- : "";
 		}
 		io.emit("userLeave", user?.id);
 	});
