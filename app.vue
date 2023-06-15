@@ -19,7 +19,7 @@
 							? current.artist.slice(0, 35) + "..."
 							: current.artist
 					}}
-					(Added by {{ user?.global_name }})
+					(Added by {{ current.addedBy ?? "Unknown" }})
 				</div>
 			</div>
 		</div>
@@ -79,7 +79,6 @@ const auth = useAuth();
 const token = computed(() => auth.token);
 const current = computed(() => queueData.current());
 const playing = computed(() => player.playing);
-const user = computed(() => auth.user);
 
 const onYouTubeIframeAPIReady = () => {
 	player.setYTplayer(

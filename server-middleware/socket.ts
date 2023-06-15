@@ -45,6 +45,7 @@ setInterval(() => {
 
 io.on("connection", async (socket) => {
 	console.log("Connection", socket.id);
+	socket.emit("playerState", playerState);
 
 	setInterval(() => {
 		socket.emit("playerState", playerState);
@@ -113,7 +114,6 @@ io.on("connection", async (socket) => {
 			const doc = await users.insertOne(user);
 			callback({ data: retData, token: doc.insertedId.toString() });
 		} else {
-			console.log(userExists);
 			await users.updateOne({ _id: new ObjectId(userExists._id) }, { $set: user });
 			callback({ data: retData, token: userExists._id.toString() });
 		}
@@ -206,26 +206,55 @@ io.on("connection", async (socket) => {
 	);
 
 	socket.on("controlSong", async (token: string, status: boolean) => {
+		const db = (await clientPromise).db();
+		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+		if (!user) {
+			return;
+		}
 		playerState.playing = status;
+		io.emit("playerState", playerState);
 	});
 
 	socket.on("stopSong", async (token: string) => {
+		const db = (await clientPromise).db();
+		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+		if (!user) {
+			return;
+		}
 		console.log("stopsong");
 		playerState.playing = false;
 		playerState.song = null;
+		io.emit("playerState", playerState);
 	});
 
 	socket.on("seekSong", async (token: string, time: number) => {
+		const db = (await clientPromise).db();
+		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+		if (!user) {
+			return;
+		}
 		playerState.currentTime = time;
+		io.emit("playerState", playerState);
 	});
 
 	socket.on("setSongVolume", async (token: string, volume: number) => {
+		const db = (await clientPromise).db();
+		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+		if (!user) {
+			return;
+		}
 		playerState.volume = volume;
+		io.emit("playerState", playerState);
 	});
 
 	socket.on(
 		"queueUpdate",
-		(event: "nextSong" | "removeSong" | "addSong", token: string, song: Song | null) => {
+		async (event: "nextSong" | "removeSong" | "addSong", token: string, song: Song | null) => {
+			const db = (await clientPromise).db();
+			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+			if (!user) {
+				return;
+			}
 			switch (event) {
 				case "nextSong":
 					playerState.queue.shift();
@@ -240,6 +269,7 @@ io.on("connection", async (socket) => {
 					io.emit("playerState", playerState);
 					break;
 				case "addSong":
+					if (song) song.addedBy = user.global_name;
 					playerState.queue.push(song!);
 					if (playerState.queue.length === 1) {
 						playerState.song = song;

@@ -22,7 +22,7 @@
 			<div class="queue-result-desc">
 				<div class="queue-result-title">{{ song.title }}</div>
 				<div class="queue-result-artist">
-					{{ song.artist }} (Added by {{ user?.global_name }})
+					{{ song.artist }} (Added by {{ song.addedBy ?? "Unknown" }})
 				</div>
 			</div>
 		</div>
@@ -37,7 +37,6 @@ const auth = useAuth();
 const queueData = useQueue();
 const queue = computed(() => queueData.queue.slice(1));
 const token = computed(() => auth.token);
-const user = computed(() => auth.user);
 </script>
 
 <style scoped>
