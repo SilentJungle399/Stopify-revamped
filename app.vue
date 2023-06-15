@@ -8,17 +8,18 @@
 			<div class="song-description">
 				<div class="song-title" :title="current.title">
 					{{
-						current.title.length > 50
-							? current.title.slice(0, 50) + "..."
+						current.title.length > 35
+							? current.title.slice(0, 35) + "..."
 							: current.title
 					}}
 				</div>
 				<div class="song-artist" :title="current.artist">
 					{{
-						current.artist.length > 50
-							? current.artist.slice(0, 50) + "..."
+						current.artist.length > 35
+							? current.artist.slice(0, 35) + "..."
 							: current.artist
 					}}
+					(Added by {{ user?.global_name }})
 				</div>
 			</div>
 		</div>
@@ -30,7 +31,7 @@
 						skip_previous
 					</span>
 				</div>
-				<div class="control playpause">
+				<div class="control playpause" id="playpause">
 					<span
 						class="material-symbols-outlined"
 						style="font-size: 45px"
@@ -49,7 +50,10 @@
 					</span>
 				</div>
 				<div class="control skip">
-					<span class="material-symbols-outlined" @click="queueData.next">
+					<span
+						class="material-symbols-outlined"
+						@click="() => $io.emit('queueUpdate', 'nextSong', token)"
+					>
 						skip_next
 					</span>
 				</div>
@@ -63,7 +67,6 @@
 
 <script setup lang="ts">
 import { useQueue, usePlayer, useChat, useUsers, useAuth } from "~/store";
-import callback from "./server/api/callback";
 
 const { $io } = useNuxtApp();
 
@@ -73,8 +76,10 @@ const chat = useChat();
 const users = useUsers();
 const auth = useAuth();
 
+const token = computed(() => auth.token);
 const current = computed(() => queueData.current());
 const playing = computed(() => player.playing);
+const user = computed(() => auth.user);
 
 const onYouTubeIframeAPIReady = () => {
 	player.setYTplayer(
@@ -87,7 +92,7 @@ const onYouTubeIframeAPIReady = () => {
 				controls: 0,
 				autohide: 1,
 				wmode: "opaque",
-				origin: "http://localhost:3000",
+				origin: window.location.href,
 			},
 			events: player.events,
 		})
@@ -124,6 +129,23 @@ onMounted(() => {
 
 	$io.on("userLeave", (user: string | null) => {
 		user ? users.removeKnownUser(user) : users.removeAnonUser();
+	});
+
+	$io.on("playerState", (state: PlayerState) => {
+		queueData.setQueue(state.queue);
+
+		if (!state.song && playing.value) {
+			player.stop(true);
+		}
+
+		state.playing ? player.play(undefined, true) : player.pause(undefined, true);
+		if (
+			state.currentTime - 5 > player.currentTime() ||
+			state.currentTime + 5 < player.currentTime()
+		) {
+			player.seek(state.currentTime, true);
+			player.play(undefined, true);
+		}
 	});
 
 	$io.emit(
@@ -202,6 +224,7 @@ body {
 	margin: auto;
 	display: flex;
 	flex-direction: column;
+	z-index: 100;
 }
 
 .seekbar {
