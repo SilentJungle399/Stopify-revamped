@@ -65,12 +65,24 @@ const login = () => {
 		"scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,\n" +
 		"width=700,height=800,left=50%,top=50%";
 
-	const url = `https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fcallback&response_type=code&scope=identify`;
+	// prettier-ignore
+	const urltest = "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fcallback&response_type=code&scope=identify";
+	const urlresptest = "http://localhost:3000";
+	// prettier-ignore
+	const urlprod = "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=https%3A%2F%2Fstopify.silentjungle.me%2Fapi%2Fcallback&response_type=code&scope=identify"
+	const urlrespprod = "https://stopify.silentjungle.me";
 
-	const popup = window.open(url, "Discord Auth", params);
+	const popup = window.open(
+		window.location.href.includes("silentjungle.me") ? urlprod : urltest,
+		"Discord Auth",
+		params
+	);
 
 	const interval = setInterval(() => {
-		popup?.postMessage("", "http://localhost:3000"); // Replace * with your origin
+		popup?.postMessage(
+			"",
+			window.location.href.includes("silentjungle.me") ? urlrespprod : urlresptest
+		);
 	}, 500);
 
 	window.addEventListener(
@@ -82,8 +94,10 @@ const login = () => {
 				$io.emit(
 					"validateLogin",
 					event.data.code,
-					({ data, token }: { data: UserData; token: string }) =>
-						auth.setAuth({ token, user: data })
+					({ data, token }: { data: UserData; token: string }) => {
+						localStorage.setItem("token", token);
+						auth.setAuth({ token, user: data });
+					}
 				);
 			}
 		},
