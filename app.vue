@@ -150,10 +150,10 @@ onMounted(() => {
 	$io.emit(
 		"roomUsersRequest",
 		({ userlist, anonUsers }: { userlist: UserData[]; anonUsers: number }) => {
-			userlist.forEach((user) => {
-				users.addKnownUser(user);
+			users.setUsers({
+				known: userlist,
+				anon: anonUsers,
 			});
-			users.addAnonUser(anonUsers);
 		}
 	);
 

@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { useAuth } from ".";
 
 export default defineStore("users", () => {
 	const knownUsers = ref<UserData[]>([]);
@@ -22,5 +21,18 @@ export default defineStore("users", () => {
 		anonUsers.value -= n;
 	};
 
-	return { knownUsers, anonUsers, addKnownUser, addAnonUser, removeKnownUser, removeAnonUser };
+	const setUsers = ({ known, anon }: { known: UserData[]; anon: number }) => {
+		knownUsers.value = known;
+		anonUsers.value = anon;
+	};
+
+	return {
+		knownUsers,
+		anonUsers,
+		addKnownUser,
+		addAnonUser,
+		removeKnownUser,
+		removeAnonUser,
+		setUsers,
+	};
 });

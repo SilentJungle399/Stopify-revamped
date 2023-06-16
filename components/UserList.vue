@@ -22,12 +22,25 @@
 <script setup lang="ts">
 import { useUsers, useAuth } from "~/store";
 
+const { $io } = useNuxtApp();
+
 const users = useUsers();
 const auth = useAuth();
 
 const self = computed(() => auth.user);
 const knownUsers = computed(() => users.knownUsers);
 const anonUsers = computed(() => users.anonUsers);
+onMounted(() => {
+	$io.emit(
+		"roomUsersRequest",
+		({ userlist, anonUsers }: { userlist: UserData[]; anonUsers: number }) => {
+			users.setUsers({
+				known: userlist,
+				anon: anonUsers,
+			});
+		}
+	);
+});
 </script>
 
 <style>

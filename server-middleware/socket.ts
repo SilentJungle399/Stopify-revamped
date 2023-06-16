@@ -18,7 +18,12 @@ const redirectUritest = "http://localhost:3000/api/callback";
 const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
 
 const sockConns = new Map<string, UserData>();
-var anonUsers = 0;
+const anonUsers = async () => {
+	const sockets = await io.fetchSockets();
+	console.log(sockets);
+	console.log(sockConns);
+	return sockets.filter((socket) => !sockConns.has(socket.id)).length;
+};
 
 const playerState: PlayerState = {
 	playing: false,
@@ -110,6 +115,7 @@ io.on("connection", async (socket) => {
 			discriminator: user.discriminator,
 			global_name: user.global_name,
 		};
+		sockConns.set(socket.id, retData);
 		if (!userExists) {
 			const doc = await users.insertOne(user);
 			callback({ data: retData, token: doc.insertedId.toString() });
@@ -126,7 +132,6 @@ io.on("connection", async (socket) => {
 		const users = db.collection("users");
 		const user = await users.findOne({ _id: new ObjectId(token) });
 		if (!user) {
-			anonUsers++;
 			return io.emit("userJoin", null);
 		}
 
@@ -144,10 +149,11 @@ io.on("connection", async (socket) => {
 		callback(retData);
 	});
 
-	socket.on("roomUsersRequest", (callback) => {
+	socket.on("roomUsersRequest", async (callback) => {
+		const unknownUsers = await anonUsers();
 		callback({
 			userlist: [...sockConns.values()],
-			anonUsers,
+			anonUsers: unknownUsers,
 		});
 	});
 
@@ -289,8 +295,6 @@ io.on("connection", async (socket) => {
 		const user = sockConns.get(socket.id);
 		if (user) {
 			sockConns.delete(socket.id);
-		} else {
-			anonUsers > 0 ? anonUsers-- : "";
 		}
 		io.emit("userLeave", user?.id);
 	});
