@@ -4,24 +4,35 @@
 			<button class="login" @click="login">Login via Discord</button>
 		</div>
 		<div v-else style="width: 100%; height: 100%; display: flex; flex-direction: column">
-			<!-- <div class="chat">
+			<div class="chat" id="chat">
 				<div class="message" v-for="msg in msgs">
 					<img
 						:src="`https://cdn.discordapp.com/avatars/${msg.user.id}/${msg.user.avatar}`"
 						alt=""
+						v-if="msg.user.id !== '0'"
 					/>
-					<div class="message-content">
-						<div class="message-details">
+					<div
+						class="message-content"
+						:style="
+							msg.user.id === '0'
+								? `background-color: #111; margin-left: 30px; height: 30px; border-radius: 5px; `
+								: ''
+						"
+					>
+						<div class="message-details" v-if="msg.user.id !== '0'">
 							<span class="author-name"> {{ msg.user.global_name }}</span>
-							<span class="message-time">
-								{{
-									new Date(msg.timestamp).toLocaleString("en-US", {
-										hour12: true,
-									})
-								}}</span
-							>
+							<span class="message-time"> {{ formatDate(msg.timestamp) }}</span>
 						</div>
-						<div class="message-text">{{ msg.content }}</div>
+						<div
+							class="message-text"
+							:style="
+								msg.user.id === '0'
+									? `margin: auto; font-size: small; color: gray;`
+									: ''
+							"
+						>
+							{{ msg.content }}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -30,17 +41,15 @@
 				placeholder="Type your message"
 				@keypress.enter="sendMessage"
 				v-model="msgInput"
-			/> -->
-
-			<div style="margin: auto; font-family: Arial, Helvetica, sans-serif; font-size: 30px">
-				Work in progress
-			</div>
+				v-if="loggedIn"
+			/>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { useAuth, useChat } from "~/store";
+import moment from "moment";
 
 const { $io } = useNuxtApp();
 
@@ -48,9 +57,27 @@ const auth = useAuth();
 const chat = useChat();
 
 const loggedIn = computed(() => !!auth.token);
-const user = computed(() => auth.user);
 const msgs = computed(() => chat.messages);
 const msgInput = ref("");
+
+const formatDate = (timestamp: number) => {
+	return moment(timestamp).calendar();
+};
+
+onMounted(() => {
+	const elem = document.getElementById("chat");
+	if (elem) {
+		elem.scrollTop = elem.scrollHeight;
+	}
+	$io.on("newIncomingMessage", (message: any) => {
+		const elem = document.getElementById("chat");
+		if (elem && elem.scrollHeight - (elem.scrollTop + elem.clientHeight) < 400) {
+			setTimeout(() => {
+				elem.scrollTop = elem.scrollHeight;
+			}, 100);
+		}
+	});
+});
 
 const sendMessage = (e: KeyboardEvent) => {
 	e.preventDefault();
@@ -109,7 +136,7 @@ const login = () => {
 <style scoped>
 input {
 	width: 85%;
-	border: 1px solid white;
+	border: 1px solid var(--border-color);
 	border-radius: 6px;
 	background-color: black;
 	color: white;
@@ -135,20 +162,22 @@ input:focus {
 
 .message {
 	display: flex;
-	margin: 10px 0;
+	padding-right: 25px;
+	margin: 15px 0;
 }
 
 .message img {
-	width: 35px;
-	height: 35px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
-	margin-right: 10px;
+	margin-right: 15px;
 	margin-left: 30px;
 }
 
 .message-content {
 	display: flex;
 	flex-direction: column;
+	width: 100%;
 }
 
 .message-details {
@@ -156,16 +185,19 @@ input:focus {
 }
 
 .author-name {
-	font-weight: bold;
 	margin-right: 10px;
 }
 
 .message-time {
 	color: gray;
+	font-size: small;
+	vertical-align: bottom;
+	margin-top: auto;
 }
 
 .message-text {
 	margin-top: 5px;
+	font-family: Arial, Helvetica, sans-serif;
 }
 
 span {
@@ -185,7 +217,7 @@ span {
 
 .login {
 	height: 50px;
-	border: 1px solid white;
+	border: 1px solid var(--border-color);
 	background-color: black;
 	color: white;
 	border-radius: 15px;
@@ -196,7 +228,7 @@ span {
 }
 
 .login:hover {
-	background-color: white;
+	background-color: var(--secondary-color);
 	color: black;
 }
 </style>

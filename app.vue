@@ -165,7 +165,7 @@ onMounted(() => {
 
 <style>
 body {
-	background-color: black;
+	background-color: var(--background-color);
 	color: white;
 	user-select: none;
 }
@@ -176,7 +176,8 @@ body {
 	right: 50px;
 	height: 100px;
 	width: calc(100vw - 100px);
-	border: 1px solid white;
+	border: 1px solid var(--border-color);
+	background: var(--primary-color);
 	border-radius: 20px;
 	display: flex;
 }
@@ -256,7 +257,7 @@ body {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-	background: white;
+	background: var(--secondary-color);
 	border-radius: 10px;
 }
 </style>

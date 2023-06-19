@@ -37,8 +37,8 @@ main {
 
 button {
 	height: 50px;
-	border: 1px solid white;
-	background-color: black;
+	border: 1px solid var(--border-color);
+	background-color: var(--secondary-color);
 	color: white;
 	padding: 0 20px;
 	font-size: 20px;
@@ -54,22 +54,23 @@ button {
 }
 
 button:hover {
-	background-color: white;
-	color: black;
+	background-color: var(--primary-color);
+	/* color: black; */
 	cursor: pointer;
 }
 
 .active-btn {
-	background-color: white;
-	color: black;
+	background-color: var(--primary-color);
+	/* color: black; */
 }
 
 .display-area {
 	position: absolute;
 	height: calc(100vh - 275px);
 	width: calc(100vw / 2 - 75px);
-	border: 1px solid white;
+	border: 1px solid var(--border-color);
 	border-radius: 20px;
 	border-top-left-radius: 0;
+	background: var(--primary-color);
 }
 </style>

@@ -21,7 +21,7 @@ export default defineStore("player", () => {
 					const auth = useAuth();
 					const token = computed(() => auth.token);
 					playing.value = false;
-					$io.emit("queueUpdate", "nextSong", token.value);
+					$io.emit("queueUpdate", "nextSong", token.value, false);
 					break;
 				case 1:
 					playing.value = true;
@@ -51,8 +51,10 @@ export default defineStore("player", () => {
 		YTplayer.value = player;
 
 		const seekbar = document.getElementById("progress") as HTMLInputElement;
+		const queue = useQueue();
+		const current = computed(() => queue.current());
 		setInterval(() => {
-			if (YTplayer.value.getCurrentTime) {
+			if (YTplayer.value.getCurrentTime && current) {
 				const currentPos = YTplayer.value.getCurrentTime();
 				const duration = YTplayer.value.getDuration();
 				seekbar.style.width = `${(currentPos / duration) * 100}%`;

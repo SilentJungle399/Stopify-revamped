@@ -20,8 +20,6 @@ const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
 const sockConns = new Map<string, UserData>();
 const anonUsers = async () => {
 	const sockets = await io.fetchSockets();
-	console.log(sockets);
-	console.log(sockConns);
 	return sockets.filter((socket) => !sockConns.has(socket.id)).length;
 };
 
@@ -36,6 +34,30 @@ const playerState: PlayerState = {
 const parseDuration = (duration: string) => {
 	const parts = duration.split(":");
 	return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+};
+
+const shorten = (content: string | undefined) => {
+	return content ? (content.length > 20 ? content?.substring(0, 20) + "..." : content) : content;
+};
+
+const sendSystemMessage = async (message: string) => {
+	const msg = {
+		timestamp: Date.now(),
+		content: message,
+		user: {
+			id: "0",
+			avatar: "",
+			discriminator: "",
+			username: "",
+			global_name: "",
+		},
+	};
+	const db = (await clientPromise).db();
+	const doc = await db.collection("messages").insertOne(msg);
+	io.emit("newIncomingMessage", {
+		...msg,
+		id: doc.insertedId.toString(),
+	});
 };
 
 setInterval(() => {
@@ -255,7 +277,12 @@ io.on("connection", async (socket) => {
 
 	socket.on(
 		"queueUpdate",
-		async (event: "nextSong" | "removeSong" | "addSong", token: string, song: Song | null) => {
+		async (
+			event: "nextSong" | "removeSong" | "addSong",
+			token: string,
+			song: Song | null,
+			system: boolean = true
+		) => {
 			const db = (await clientPromise).db();
 			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
 			if (!user) {
@@ -263,6 +290,11 @@ io.on("connection", async (socket) => {
 			}
 			switch (event) {
 				case "nextSong":
+					if (system)
+						await sendSystemMessage(
+							`${user.global_name} skipped ${shorten(song?.title)}!`
+						);
+
 					playerState.queue.shift();
 					playerState.song = playerState.queue[0];
 					playerState.playing = playerState.song !== null;
@@ -282,6 +314,7 @@ io.on("connection", async (socket) => {
 						playerState.playing = true;
 						playerState.currentTime = 0;
 					}
+					await sendSystemMessage(`${user.global_name} added a song!`);
 					io.emit("playerState", playerState);
 					break;
 				default:
