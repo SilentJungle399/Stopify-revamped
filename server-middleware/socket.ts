@@ -91,7 +91,7 @@ io.on("connection", async (socket) => {
 					title: item.type === "video" ? item.title : "Unknown",
 					url: item.type === "video" ? item.url : "",
 					views: item.type === "video" ? item.views : 0,
-					id: item.type === "video" ? item.id : "",
+					id: item.type === "video" ? item.id + Date.now() : "",
 				}))
 		);
 	});
@@ -283,6 +283,7 @@ io.on("connection", async (socket) => {
 			song: Song | null,
 			system: boolean = true
 		) => {
+			console.log("queueUpdate", event, song?.title);
 			const db = (await clientPromise).db();
 			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
 			if (!user) {

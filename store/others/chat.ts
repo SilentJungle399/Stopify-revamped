@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { useAuth } from ".";
+import { useAuth } from "..";
 
 export default defineStore("chat", () => {
 	const { $io } = useNuxtApp();

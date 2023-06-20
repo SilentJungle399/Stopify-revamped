@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { usePlayer } from ".";
+import { usePlayer } from "..";
 
 export default defineStore("queue", () => {
 	const { $io } = useNuxtApp();
