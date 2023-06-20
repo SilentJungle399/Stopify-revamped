@@ -1,6 +1,9 @@
 <template>
-	<queue-section></queue-section>
-	<other-section></other-section>
+	<queue></queue>
+
+	<PlayerSeekbar :draggable="!!true"></PlayerSeekbar>
+	<PlayerRoot></PlayerRoot>
+	<!--<other-section></other-section>
 	<div class="player-section">
 		<div id="player" style="display: none"></div>
 		<div class="song-details" v-if="current">
@@ -62,7 +65,7 @@
 				<div class="progress" id="progress"></div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 </template>
 
 <script setup lang="ts">
@@ -165,83 +168,9 @@ onMounted(() => {
 
 <style>
 body {
-	background-color: var(--background-color);
+	background-color: #151729;
 	color: white;
 	user-select: none;
-}
-
-.player-section {
-	position: absolute;
-	bottom: 50px;
-	right: 50px;
-	height: 100px;
-	width: calc(100vw - 100px);
-	border: 1px solid var(--border-color);
-	background: var(--primary-color);
-	border-radius: 20px;
-	display: flex;
-}
-
-.song-details {
-	display: flex;
-	position: absolute;
-	margin-left: 20px;
-	top: 20px;
-}
-
-.song-details img {
-	height: 60px;
-	margin: auto 0;
-}
-
-.song-description {
-	margin: auto 0;
-	margin-left: 20px;
-	font-family: Arial, Helvetica, sans-serif;
-}
-
-.song-title {
-	font-size: 17px;
-}
-
-.song-artist {
-	margin-top: 5px;
-	color: gray;
-	font-size: 15px;
-}
-
-.controls {
-	display: flex;
-	margin: auto;
-}
-
-.control {
-	cursor: pointer;
-	margin: auto 5px;
-}
-
-.audio-controls {
-	margin: auto;
-	display: flex;
-	flex-direction: column;
-	z-index: 100;
-}
-
-.seekbar {
-	width: 500px;
-	height: 3px;
-	border: 0.5px solid white;
-	border-radius: 10px;
-	margin: auto;
-}
-
-.progress {
-	display: block;
-	width: 0%;
-	height: 100%;
-	background: white;
-	border-radius: 10px;
-	transition: width 0.1s ease-in-out;
 }
 
 ::-webkit-scrollbar {
@@ -251,13 +180,13 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-	background: black;
+	background: transparent;
 	border-radius: 10px;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-	background: var(--secondary-color);
+	background: #373a50;
 	border-radius: 10px;
 }
 </style>
