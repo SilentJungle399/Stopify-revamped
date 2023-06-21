@@ -2,70 +2,10 @@
 	<queue></queue>
 
 	<PlayerSeekbar :draggable="!!true"></PlayerSeekbar>
-	<PlayerRoot></PlayerRoot>
-	<!--<other-section></other-section>
-	<div class="player-section">
-		<div id="player" style="display: none"></div>
-		<div class="song-details" v-if="current">
-			<img :src="current.thumbnail" alt="" />
-			<div class="song-description">
-				<div class="song-title" :title="current.title">
-					{{
-						current.title.length > 35
-							? current.title.slice(0, 35) + "..."
-							: current.title
-					}}
-				</div>
-				<div class="song-artist" :title="current.artist">
-					{{
-						current.artist.length > 35
-							? current.artist.slice(0, 35) + "..."
-							: current.artist
-					}}
-					(Added by {{ current.addedBy ?? "Unknown" }})
-				</div>
-			</div>
-		</div>
+	<PlayerRoot @switchTab="(tab: string) => (currTab = tab)"></PlayerRoot>
 
-		<div class="audio-controls">
-			<div class="controls">
-				<div class="control previous">
-					<span class="material-symbols-outlined" @click="queueData.previous">
-						skip_previous
-					</span>
-				</div>
-				<div class="control playpause" id="playpause">
-					<span
-						class="material-symbols-outlined"
-						style="font-size: 45px"
-						v-if="playing"
-						@click="player.pause"
-					>
-						pause_circle
-					</span>
-					<span
-						class="material-symbols-outlined"
-						style="font-size: 45px"
-						v-else
-						@click="player.play"
-					>
-						play_circle
-					</span>
-				</div>
-				<div class="control skip">
-					<span
-						class="material-symbols-outlined"
-						@click="() => $io.emit('queueUpdate', 'nextSong', token)"
-					>
-						skip_next
-					</span>
-				</div>
-			</div>
-			<div class="seekbar">
-				<div class="progress" id="progress"></div>
-			</div>
-		</div>
-	</div> -->
+	<ChatArea v-if="currTab === 'chat'"></ChatArea>
+	<Lyrics v-if="currTab === 'lyrics'"></Lyrics>
 </template>
 
 <script setup lang="ts">
@@ -82,6 +22,8 @@ const auth = useAuth();
 const token = computed(() => auth.token);
 const current = computed(() => queueData.current());
 const playing = computed(() => player.playing);
+
+const currTab = ref("chat");
 
 const onYouTubeIframeAPIReady = () => {
 	player.setYTplayer(
