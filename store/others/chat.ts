@@ -34,6 +34,12 @@ export default defineStore("chat", () => {
 						addMessage(message);
 					}
 				});
+				setTimeout(() => {
+					const elem = document.getElementById("chat");
+					if (elem) {
+						elem.scrollTop = elem.scrollHeight;
+					}
+				}, 2000);
 			}
 		);
 	};

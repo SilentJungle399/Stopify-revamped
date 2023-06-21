@@ -19,9 +19,7 @@ export default defineStore("player", () => {
 			switch (event.data) {
 				case 0:
 					const auth = useAuth();
-					const token = computed(() => auth.token);
 					playing.value = false;
-					$io.emit("queueUpdate", "nextSong", token.value, false);
 					break;
 				case 1:
 					playing.value = true;
