@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { useQueue, useAuth } from ".";
+import { useQueue, useAuth, useSeekbar } from "..";
 
 export default defineStore("player", () => {
 	const { $io } = useNuxtApp();
@@ -19,9 +19,7 @@ export default defineStore("player", () => {
 			switch (event.data) {
 				case 0:
 					const auth = useAuth();
-					const token = computed(() => auth.token);
 					playing.value = false;
-					$io.emit("queueUpdate", "nextSong", token.value, false);
 					break;
 				case 1:
 					playing.value = true;
@@ -50,16 +48,16 @@ export default defineStore("player", () => {
 		if (YTplayer.value) return;
 		YTplayer.value = player;
 
-		const seekbar = document.getElementById("progress") as HTMLInputElement;
+		const seekbar = useSeekbar();
 		const queue = useQueue();
 		const current = computed(() => queue.current());
 		setInterval(() => {
 			if (YTplayer.value.getCurrentTime && current) {
 				const currentPos = YTplayer.value.getCurrentTime();
 				const duration = YTplayer.value.getDuration();
-				seekbar.style.width = `${(currentPos / duration) * 100}%`;
+				seekbar.setProgress((currentPos / duration) * 100);
 			} else {
-				seekbar.style.width = `0%`;
+				seekbar.setProgress(0);
 			}
 		}, 100);
 	};
@@ -97,8 +95,8 @@ export default defineStore("player", () => {
 				$io.emit("stopSong", token.value);
 			}
 			playing.value = false;
-			const seekbar = document.getElementById("progress") as HTMLInputElement;
-			seekbar.style.width = `0%`;
+			const seekbar = useSeekbar();
+			seekbar.setProgress(0);
 		}
 	};
 	const seek = (time: number, sync: boolean = false) => {

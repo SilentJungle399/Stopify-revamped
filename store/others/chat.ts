@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { useAuth } from ".";
+import { useAuth } from "..";
 
 export default defineStore("chat", () => {
 	const { $io } = useNuxtApp();
@@ -34,6 +34,12 @@ export default defineStore("chat", () => {
 						addMessage(message);
 					}
 				});
+				setTimeout(() => {
+					const elem = document.getElementById("chat");
+					if (elem) {
+						elem.scrollTop = elem.scrollHeight;
+					}
+				}, 2000);
 			}
 		);
 	};

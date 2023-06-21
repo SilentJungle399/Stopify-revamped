@@ -22,4 +22,8 @@ export default defineNuxtConfig({
 		},
 	},
 	ssr: false,
+
+	// components: {
+	// 	dirs: ["~/components", "~/components/player"],
+	// },
 });

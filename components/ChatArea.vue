@@ -15,7 +15,7 @@
 						class="message-content"
 						:style="
 							msg.user.id === '0'
-								? `background-color: #111; margin-left: 30px; height: 30px; border-radius: 5px; `
+								? `background-color: #202339; margin-left: 30px; height: 30px; border-radius: 5px; `
 								: ''
 						"
 					>
@@ -69,6 +69,12 @@ onMounted(() => {
 	if (elem) {
 		elem.scrollTop = elem.scrollHeight;
 	}
+	setTimeout(() => {
+		const elem = document.getElementById("chat");
+		if (elem && elem.scrollHeight === 0) {
+			elem.scrollTop = elem.scrollHeight;
+		}
+	}, 2000);
 	$io.on("newIncomingMessage", (message: any) => {
 		const elem = document.getElementById("chat");
 		if (elem && elem.scrollHeight - (elem.scrollTop + elem.clientHeight) < 400) {
@@ -135,15 +141,14 @@ const login = () => {
 
 <style scoped>
 input {
-	width: 85%;
-	border: 1px solid var(--border-color);
+	border: none;
 	border-radius: 6px;
-	background-color: black;
+	background-color: #202339;
 	color: white;
 	padding: 12.5px 20px;
 	font-size: 20px;
 	transition: 0.2s;
-	margin: 20px auto;
+	margin: 20px 20px;
 }
 
 input:focus {
@@ -206,8 +211,12 @@ span {
 
 .chat-area {
 	display: flex;
-	height: 100%;
+	width: calc(100% - 400px);
+	height: calc(100% - 105px);
 	flex-direction: column;
+	position: fixed;
+	top: 0;
+	left: 400px;
 }
 
 .login-box {
@@ -218,9 +227,9 @@ span {
 .login {
 	height: 50px;
 	border: 1px solid var(--border-color);
-	background-color: black;
+	background-color: #1c1f34;
 	color: white;
-	border-radius: 15px;
+	border-radius: 7.5px;
 	padding: 0 20px;
 	font-size: 20px;
 	transition: 0.2s;
@@ -228,7 +237,6 @@ span {
 }
 
 .login:hover {
-	background-color: var(--secondary-color);
-	color: black;
+	background-color: #23263e;
 }
 </style>

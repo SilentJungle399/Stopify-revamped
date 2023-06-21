@@ -48,21 +48,31 @@ onMounted(() => {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
-	height: 100%;
-	margin-top: 20px;
+	min-height: 300px;
+	max-height: 700px;
+	position: absolute;
+	bottom: 75px;
+	right: 20px;
+	box-shadow: 0px 0px 15px 0px #15171d;
+	background-color: #202339;
+	z-index: 20;
+	transition: 0.2s;
+	border-radius: 7.5px;
 }
 
 .user {
 	display: flex;
 	align-items: center;
 	padding: 10px;
-	margin: 0 20px;
+	margin: 10px 20px;
+	margin-bottom: 0;
+	padding-bottom: 0;
 	font-family: Arial, Helvetica, sans-serif;
 }
 
 .user img {
-	width: 50px;
-	height: 50px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
 }
 
@@ -71,17 +81,17 @@ onMounted(() => {
 }
 
 .user-name {
-	font-size: 20px;
+	font-size: 17px;
 }
 
 .user-permission {
-	font-size: 15px;
+	font-size: 13px;
 	color: gray;
 }
 
 .pfp {
-	width: 50px;
-	height: 50px;
+	width: 40px;
+	height: 40px;
 	font-size: 20px;
 	font-family: Arial, Helvetica, sans-serif;
 	border-radius: 50%;

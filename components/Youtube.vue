@@ -47,9 +47,9 @@ onMounted(() => {
 <style scoped>
 input {
 	width: 85%;
-	border: 1px solid white;
+	border: none;
+	background-color: #151729;
 	border-radius: 6px;
-	background-color: black;
 	color: white;
 	padding: 12.5px 20px;
 	font-size: 20px;

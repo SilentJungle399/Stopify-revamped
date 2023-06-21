@@ -1,5 +1,38 @@
 <template>
-	<div class="results-section">
+	<div class="youtube-search" :style="`width: ${youtubeActive ? '700px' : '0px'}`">
+		<Youtube v-if="youtubeActive" />
+	</div>
+	<div class="queue-section">
+		<div style="display: flex">
+			<div
+				style="
+					margin: 20px 40px;
+					font-size: 25px;
+					font-family: Arial, Helvetica, sans-serif;
+				"
+			>
+				Queue
+			</div>
+			<span
+				class="material-symbols-outlined ytbutton"
+				:style="`
+					background-color: ${youtubeActive ? '#1c1f34' : 'none'}; 
+					rotate: ${youtubeActive ? '135deg' : '0deg'}
+				`"
+				@click="() => (youtubeActive = !youtubeActive)"
+			>
+				add
+			</span>
+		</div>
+		<hr
+			style="
+				width: 70%;
+				background-color: #494c60;
+				margin-top: 0px;
+				border: none;
+				height: 2px;
+			"
+		/>
 		<div class="queue-result" v-for="song in queue">
 			<div class="queue-result-thumbnail">
 				<button
@@ -37,17 +70,36 @@ const auth = useAuth();
 const queueData = useQueue();
 const queue = computed(() => queueData.queue.slice(1));
 const token = computed(() => auth.token);
+
+const youtubeActive = ref(false);
 </script>
 
 <style scoped>
-.results-section {
+.queue-section {
 	display: flex;
-	width: 100%;
 	flex-direction: column;
-	margin: 20px auto 20px auto;
 	overflow-y: auto;
-	height: -webkit-fill-available;
+	-webkit-user-select: none;
+	-moz-user-select: none;
 	user-select: none;
+	height: calc(100% - 100px);
+	background-color: #23263e;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 400px;
+}
+
+.youtube-search {
+	position: absolute;
+	background-color: #1c1f34;
+	top: 0;
+	left: 400px;
+	height: calc(100% - 105px);
+	transition: 0.2s;
+	display: flex;
+	flex-direction: column;
+	z-index: 10;
 }
 
 .delete {
@@ -79,6 +131,14 @@ const token = computed(() => auth.token);
 	width: 35px;
 }
 
+.ytbutton {
+	cursor: pointer;
+	padding: 7px;
+	transition: 0.2s;
+	border-radius: 50%;
+	margin: auto;
+	margin-right: 20px;
+}
 .queue-result {
 	display: flex;
 	width: 90%;
