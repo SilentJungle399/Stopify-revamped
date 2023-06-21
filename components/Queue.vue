@@ -17,7 +17,7 @@
 				class="material-symbols-outlined ytbutton"
 				:style="`
 					background-color: ${youtubeActive ? '#1c1f34' : 'none'}; 
-					rotate: ${youtubeActive ? '45deg' : '0deg'}
+					rotate: ${youtubeActive ? '135deg' : '0deg'}
 				`"
 				@click="() => (youtubeActive = !youtubeActive)"
 			>
@@ -95,10 +95,11 @@ const youtubeActive = ref(false);
 	background-color: #1c1f34;
 	top: 0;
 	left: 400px;
-	height: calc(100% - 100px);
+	height: calc(100% - 105px);
 	transition: 0.2s;
 	display: flex;
 	flex-direction: column;
+	z-index: 10;
 }
 
 .delete {

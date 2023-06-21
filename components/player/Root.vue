@@ -41,7 +41,7 @@
 					class="material-symbols-outlined"
 					style="font-size: 45px"
 					v-else
-					@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
+					@click="player.play"
 				>
 					play_circle
 				</span>
@@ -57,18 +57,41 @@
 		</div>
 		<div class="extrabuttons">
 			<span class="control">
-				<span class="material-symbols-outlined audiocontrol"> lyrics </span>
+				<span
+					class="material-symbols-outlined audiocontrol"
+					@click="
+						() => {
+							switchTab('lyrics');
+							$io.emit('lyricsRequest', current.url);
+						}
+					"
+				>
+					lyrics
+				</span>
 			</span>
 			<span class="control">
-				<span class="material-symbols-outlined audiocontrol"> forum </span>
+				<span
+					class="material-symbols-outlined audiocontrol"
+					@click="() => switchTab('chat')"
+				>
+					forum
+				</span>
 			</span>
 			<span class="control">
-				<span class="material-symbols-outlined audiocontrol" style="cursor: default">
+				<span
+					class="material-symbols-outlined audiocontrol"
+					style="cursor: default"
+					@mouseover="hovering = true"
+					@mouseleave="hovering = false"
+				>
 					group
 				</span>
 			</span>
 		</div>
 	</div>
+	<UserList
+		:style="`opacity: ${hovering ? '1' : '0'}; z-index: ${hovering ? '20' : '-1'}`"
+	></UserList>
 </template>
 
 <script setup lang="ts">
@@ -78,30 +101,24 @@ const { $io } = useNuxtApp();
 
 const queueData = useQueue();
 const player = usePlayer();
-const chat = useChat();
-const users = useUsers();
 const auth = useAuth();
 
 const token = computed(() => auth.token);
 const current = computed(() => queueData.current());
 const playing = computed(() => player.playing);
 
-const song: Song = {
-	addedBy: "bruh",
-	artist: "bruh",
-	duration: "3:00",
-	id: "bruh" + Date.now(),
-	thumbnail: "https://i.ytimg.com/vi/ox4tmEV6-QU/hq720.jpg",
-	title: "bruh",
-	url: "https://www.youtube.com/watch?v=ox4tmEV6-QU",
-	views: 0,
+const emits = defineEmits(["switchTab"]);
+const hovering = ref(false);
+
+const switchTab = (tab: string) => {
+	emits("switchTab", tab);
 };
 </script>
 
 <style>
 .playersection {
 	background-color: #1c1f34;
-	position: absolute;
+	position: fixed;
 	display: flex;
 	bottom: 0;
 	left: 0;
