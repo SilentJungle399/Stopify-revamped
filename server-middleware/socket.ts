@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import clientPromise from "~/utils/mongo";
 import { ObjectId } from "bson";
 import { DISCORD_SECRET } from "~/config";
+import fs from "fs";
 import whitelist from "./whitelist";
 
 const io = new Server(3003, {
@@ -40,6 +41,19 @@ const shorten = (content: string | undefined) => {
 	return content ? (content.length > 20 ? content?.substring(0, 20) + "..." : content) : content;
 };
 
+const getLyrics = async (url: string) => {
+	console.log("Getting lyrics");
+	console.log(url);
+	const res = await fetch(url);
+	const text = await res.text();
+
+	fs.writeFileSync("test.txt", text);
+
+	// console.log(text.includes("timedtext)"));
+	// const transcriptUrl = text.match(/"https:\/\/www\.youtube\.com\/api\/timedtext(.*?)"/g);
+	// console.log(transcriptUrl);
+};
+
 const sendSystemMessage = async (message: string) => {
 	const msg = {
 		timestamp: Date.now(),
@@ -66,6 +80,7 @@ setInterval(() => {
 		if (playerState.currentTime > parseDuration(playerState.song.duration)) {
 			playerState.currentTime = 0;
 			playerState.song = playerState.queue.shift() || null;
+			io.emit("playerState", playerState);
 		}
 	}
 }, 500);
@@ -239,6 +254,7 @@ io.on("connection", async (socket) => {
 		if (!user) {
 			return;
 		}
+		await sendSystemMessage(`${user.global_name} ${status ? "resumed" : "paused"} the song.`);
 		playerState.playing = status;
 		io.emit("playerState", playerState);
 	});
@@ -249,7 +265,7 @@ io.on("connection", async (socket) => {
 		if (!user) {
 			return;
 		}
-		console.log("stopsong");
+		await sendSystemMessage(`${user.global_name} stopped the song.`);
 		playerState.playing = false;
 		playerState.song = null;
 		io.emit("playerState", playerState);
@@ -293,7 +309,7 @@ io.on("connection", async (socket) => {
 				case "nextSong":
 					if (system)
 						await sendSystemMessage(
-							`${user.global_name} skipped ${shorten(song?.title)}!`
+							`${user.global_name} skipped ${shorten(playerState.song?.title)}!`
 						);
 
 					playerState.queue.shift();
@@ -304,6 +320,8 @@ io.on("connection", async (socket) => {
 					io.emit("playerState", playerState);
 					break;
 				case "removeSong":
+					console.log(song);
+					await sendSystemMessage(`${user.global_name} removed ${song?.title}!`);
 					playerState.queue = playerState.queue.filter((s) => s.id !== song?.id);
 					io.emit("playerState", playerState);
 					break;
@@ -315,7 +333,7 @@ io.on("connection", async (socket) => {
 						playerState.playing = true;
 						playerState.currentTime = 0;
 					}
-					await sendSystemMessage(`${user.global_name} added a song!`);
+					await sendSystemMessage(`${user.global_name} added ${song?.title}!`);
 					io.emit("playerState", playerState);
 					break;
 				default:
@@ -323,6 +341,11 @@ io.on("connection", async (socket) => {
 			}
 		}
 	);
+
+	socket.on("lyricsRequest", async (url: string) => {
+		const lyrics = await getLyrics(url);
+		// io.emit("lyricsResponse", lyrics);
+	});
 
 	socket.on("disconnecting", () => {
 		console.log("disconnected", socket.id);
