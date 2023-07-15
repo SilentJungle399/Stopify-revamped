@@ -62,7 +62,7 @@
 					@click="
 						() => {
 							switchTab('lyrics');
-							$io.emit('lyricsRequest', current.url);
+							$io.emit('lyricsRequest', current?.url);
 						}
 					"
 				>
@@ -104,7 +104,7 @@ const player = usePlayer();
 const auth = useAuth();
 
 const token = computed(() => auth.token);
-const current = computed(() => queueData.current());
+const current = computed(() => queueData.current);
 const playing = computed(() => player.playing);
 
 const emits = defineEmits(["switchTab"]);

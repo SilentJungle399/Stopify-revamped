@@ -20,7 +20,7 @@ const users = useUsers();
 const auth = useAuth();
 
 const token = computed(() => auth.token);
-const current = computed(() => queueData.current());
+const current = computed(() => queueData.current);
 const playing = computed(() => player.playing);
 
 const currTab = ref("chat");
@@ -43,6 +43,18 @@ const onYouTubeIframeAPIReady = () => {
 	);
 };
 
+const login = () => {
+	const token = localStorage.getItem("token");
+	$io.emit("validateToken", token, (user: UserData | null) => {
+		if (token && user) {
+			auth.setAuth({ token, user });
+			users.addKnownUser(user);
+		} else if (!user) {
+			users.addAnonUser();
+		}
+	});
+};
+
 onMounted(() => {
 	// @ts-ignore
 	window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
@@ -57,15 +69,7 @@ onMounted(() => {
 		chat.addMessage(message);
 	});
 
-	const token = localStorage.getItem("token");
-	$io.emit("validateToken", token, (user: UserData | null) => {
-		if (token && user) {
-			auth.setAuth({ token, user });
-			users.addKnownUser(user);
-		} else if (!user) {
-			users.addAnonUser();
-		}
-	});
+	$io.on("connect", login);
 
 	$io.on("userJoin", (user: UserData | null) => {
 		user ? users.addKnownUser(user) : users.addAnonUser();
@@ -76,19 +80,30 @@ onMounted(() => {
 	});
 
 	$io.on("playerState", (state: PlayerState) => {
+		console.log(state);
+
 		queueData.setQueue(state.queue);
+		queueData.setCurrent(state.song);
 
 		if (!state.song && playing.value) {
 			player.stop(true);
 		}
 
-		state.playing ? player.play(undefined, true) : player.pause(undefined, true);
 		if (
 			state.currentTime - 5 > player.currentTime() ||
 			state.currentTime + 5 < player.currentTime()
 		) {
 			player.seek(state.currentTime, true);
-			player.play(undefined, true);
+			// player.play(undefined, true);
+		}
+
+		state.playing ? player.play(undefined, true) : player.pause(undefined, true);
+
+		if (state.anonUsers || state.knownUsers) {
+			users.setUsers({
+				known: state.knownUsers || [],
+				anon: state.anonUsers || 0,
+			});
 		}
 	});
 

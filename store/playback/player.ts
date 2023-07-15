@@ -50,7 +50,7 @@ export default defineStore("player", () => {
 
 		const seekbar = useSeekbar();
 		const queue = useQueue();
-		const current = computed(() => queue.current());
+		const current = computed(() => queue.current);
 		setInterval(() => {
 			if (YTplayer.value.getCurrentTime && current) {
 				const currentPos = YTplayer.value.getCurrentTime();
@@ -64,7 +64,7 @@ export default defineStore("player", () => {
 
 	const play = (e: PointerEvent | undefined, sync: boolean = false) => {
 		const queue = useQueue();
-		const current = computed(() => queue.current());
+		const current = computed(() => queue.current);
 		if (YTplayer.value && current.value) {
 			YTplayer.value.playVideo();
 			if (!sync) {

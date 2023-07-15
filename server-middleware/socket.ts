@@ -74,6 +74,22 @@ const sendSystemMessage = async (message: string) => {
 	});
 };
 
+const checkPermission = async (token: string): Promise<UserData | null> => {
+	const db = (await clientPromise).db();
+	const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
+	if (!user) return user;
+
+	const retData: UserData = {
+		id: user.id,
+		username: user.username,
+		avatar: user.avatar,
+		discriminator: user.discriminator,
+		global_name: user.global_name,
+		permission: whitelist[user.id] || 3,
+	};
+	return retData;
+};
+
 setInterval(() => {
 	if (playerState.song && playerState.playing) {
 		playerState.currentTime += 0.5;
@@ -82,15 +98,25 @@ setInterval(() => {
 			playerState.song = playerState.queue.shift() || null;
 			io.emit("playerState", playerState);
 		}
+	} else if (!playerState.song) {
+		playerState.currentTime = 0;
 	}
 }, 500);
 
 io.on("connection", async (socket) => {
 	console.log("Connection", socket.id);
-	socket.emit("playerState", playerState);
+	socket.emit("playerState", {
+		...playerState,
+		anonUsers: await anonUsers(),
+		knownUsers: [...sockConns.values()],
+	});
 
-	setInterval(() => {
-		socket.emit("playerState", playerState);
+	setInterval(async () => {
+		socket.emit("playerState", {
+			...playerState,
+			anonUsers: await anonUsers(),
+			knownUsers: [...sockConns.values()],
+		});
 	}, 5000);
 
 	socket.on("songSearch", async (query: string) => {
@@ -151,6 +177,7 @@ io.on("connection", async (socket) => {
 			avatar: user.avatar,
 			discriminator: user.discriminator,
 			global_name: user.global_name,
+			permission: whitelist[user.id] || 3,
 		};
 		sockConns.set(socket.id, retData);
 		if (!userExists) {
@@ -180,6 +207,7 @@ io.on("connection", async (socket) => {
 			avatar: user.avatar,
 			discriminator: user.discriminator,
 			global_name: user.global_name,
+			permission: whitelist[user.id] || 3,
 		};
 		sockConns.set(socket.id, retData);
 		io.emit("userJoin", retData);
@@ -197,11 +225,10 @@ io.on("connection", async (socket) => {
 	socket.on(
 		"newMessage",
 		async ({ token, message }: { token: string; message: PartialMessage }) => {
+			const user = await checkPermission(token);
+			if (!user || user.permission === 3) return;
 			const db = (await clientPromise).db();
-			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-			if (!user) {
-				return;
-			}
+
 			message.content = message.content.trim();
 			const retMsg = {
 				...message,
@@ -212,6 +239,7 @@ io.on("connection", async (socket) => {
 					avatar: user.avatar,
 					discriminator: user.discriminator,
 					global_name: user.global_name,
+					permission: whitelist[user.id] || 3,
 				},
 			};
 			const msg = await db.collection("messages").insertOne(retMsg);
@@ -226,11 +254,10 @@ io.on("connection", async (socket) => {
 	socket.on(
 		"loadMessages",
 		async ({ token, timestamp }: { token: string; timestamp: number }, callback) => {
+			// const user = await checkPermission(token);
+			// if (!user) return;
+
 			const db = (await clientPromise).db();
-			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-			if (!user) {
-				return;
-			}
 			const messages = await db
 				.collection("messages")
 				.find(timestamp ? { timestamp: { $lt: timestamp } } : {})
@@ -249,22 +276,16 @@ io.on("connection", async (socket) => {
 	);
 
 	socket.on("controlSong", async (token: string, status: boolean) => {
-		const db = (await clientPromise).db();
-		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-		if (!user) {
-			return;
-		}
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
 		await sendSystemMessage(`${user.global_name} ${status ? "resumed" : "paused"} the song.`);
 		playerState.playing = status;
 		io.emit("playerState", playerState);
 	});
 
 	socket.on("stopSong", async (token: string) => {
-		const db = (await clientPromise).db();
-		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-		if (!user) {
-			return;
-		}
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
 		await sendSystemMessage(`${user.global_name} stopped the song.`);
 		playerState.playing = false;
 		playerState.song = null;
@@ -272,21 +293,15 @@ io.on("connection", async (socket) => {
 	});
 
 	socket.on("seekSong", async (token: string, time: number) => {
-		const db = (await clientPromise).db();
-		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-		if (!user) {
-			return;
-		}
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
 		playerState.currentTime = time;
 		io.emit("playerState", playerState);
 	});
 
 	socket.on("setSongVolume", async (token: string, volume: number) => {
-		const db = (await clientPromise).db();
-		const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-		if (!user) {
-			return;
-		}
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
 		playerState.volume = volume;
 		io.emit("playerState", playerState);
 	});
@@ -300,11 +315,8 @@ io.on("connection", async (socket) => {
 			system: boolean = true
 		) => {
 			console.log("queueUpdate", event, song?.title);
-			const db = (await clientPromise).db();
-			const user = await db.collection("users").findOne({ _id: new ObjectId(token) });
-			if (!user) {
-				return;
-			}
+			const user = await checkPermission(token);
+			if (!user || user.permission !== 1) return;
 			switch (event) {
 				case "nextSong":
 					if (system)
@@ -312,11 +324,9 @@ io.on("connection", async (socket) => {
 							`${user.global_name} skipped ${shorten(playerState.song?.title)}!`
 						);
 
-					playerState.queue.shift();
-					playerState.song = playerState.queue[0];
+					playerState.song = playerState.queue.shift() || null;
 					playerState.playing = playerState.song !== null;
 					playerState.currentTime = 0;
-
 					io.emit("playerState", playerState);
 					break;
 				case "removeSong":
@@ -327,13 +337,19 @@ io.on("connection", async (socket) => {
 					break;
 				case "addSong":
 					if (song) song.addedBy = user.global_name;
-					playerState.queue.push(song!);
-					if (playerState.queue.length === 1) {
-						playerState.song = song;
-						playerState.playing = true;
-						playerState.currentTime = 0;
+					if (playerState.queue.length === 0) {
+						if (playerState.song) {
+							playerState.queue.push(song!);
+						} else {
+							playerState.song = song;
+							playerState.playing = true;
+							playerState.currentTime = 0;
+						}
+					} else {
+						playerState.queue.push(song!);
 					}
 					await sendSystemMessage(`${user.global_name} added ${song?.title}!`);
+
 					io.emit("playerState", playerState);
 					break;
 				default:
@@ -343,7 +359,7 @@ io.on("connection", async (socket) => {
 	);
 
 	socket.on("lyricsRequest", async (url: string) => {
-		const lyrics = await getLyrics(url);
+		// const lyrics = await getLyrics(url);
 		// io.emit("lyricsResponse", lyrics);
 	});
 

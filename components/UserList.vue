@@ -6,7 +6,15 @@
 				<div class="user-name">
 					{{ user.global_name }} {{ self?.id === user.id ? " (You)" : "" }}
 				</div>
-				<div class="user-permission">Admin</div>
+				<div class="user-permission">
+					{{
+						{
+							1: "Admin",
+							2: "Chat perms",
+							3: "Listener",
+						}[user.permission]
+					}}
+				</div>
 			</div>
 		</div>
 		<div class="user" v-if="anonUsers > 0">

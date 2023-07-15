@@ -68,7 +68,7 @@ import { useAuth, useQueue } from "~/store";
 const { $io } = useNuxtApp();
 const auth = useAuth();
 const queueData = useQueue();
-const queue = computed(() => queueData.queue.slice(1));
+const queue = computed(() => queueData.queue);
 const token = computed(() => auth.token);
 
 const youtubeActive = ref(false);

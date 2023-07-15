@@ -3,6 +3,7 @@ import { usePlayer } from "..";
 
 export default defineStore("queue", () => {
 	const { $io } = useNuxtApp();
+	const current = ref<Song | null>(null);
 	const queue = ref<Song[]>([]);
 
 	const add = (item: Song) => {
@@ -18,14 +19,14 @@ export default defineStore("queue", () => {
 
 		if (index > -1) queue.value.splice(index, 1);
 	};
-	const current = () => queue.value[0];
 
 	const next = () => {
 		const player = usePlayer();
 
 		if (queue.value.length > 0) {
 			player.stop();
-			player.loadVideoByUrl(queue.value[0]);
+			current.value = queue.value.shift() || null;
+			player.loadVideoByUrl(current.value!);
 		} else {
 			player.stop();
 		}
@@ -37,23 +38,31 @@ export default defineStore("queue", () => {
 	};
 
 	const setQueue = (newQueue: Song[]) => {
-		const player = usePlayer();
+		// const player = usePlayer();
 
-		if (queue.value.length > 0) {
-			if (newQueue.length === 0) {
-				player.stop(true);
-			} else if (queue.value[0]?.url !== newQueue[0]?.url) {
-				player.stop(true);
-				player.loadVideoByUrl(newQueue[0]);
-			}
-		} else {
-			if (newQueue.length > 0) {
-				player.loadVideoByUrl(newQueue[0]);
-			}
-		}
+		// if (queue.value.length > 0) {
+		// 	if (newQueue.length === 0) {
+		// 		player.stop(true);
+		// 	} else if (queue.value[0]?.url !== newQueue[0]?.url) {
+		// 		player.stop(true);
+		// 		player.loadVideoByUrl(newQueue[0]);
+		// 	}
+		// } else {
+		// 	if (newQueue.length > 0) {
+		// 		player.loadVideoByUrl(newQueue[0]);
+		// 	}
+		// }
 
 		queue.value = newQueue;
 	};
 
-	return { queue, add, remove, current, next, previous, setQueue };
+	const setCurrent = (item: Song | null) => {
+		const player = usePlayer();
+		if (current.value?.id === item?.id) return;
+		player.stop(true);
+		current.value = item;
+		if (item) player.loadVideoByUrl(item);
+	};
+
+	return { queue, add, remove, current, next, previous, setQueue, setCurrent };
 });

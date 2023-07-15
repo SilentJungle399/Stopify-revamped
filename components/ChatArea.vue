@@ -41,7 +41,7 @@
 				placeholder="Type your message"
 				@keypress.enter="sendMessage"
 				v-model="msgInput"
-				v-if="loggedIn"
+				v-if="loggedIn && user?.permission !== 2"
 			/>
 		</div>
 	</div>
@@ -57,6 +57,7 @@ const auth = useAuth();
 const chat = useChat();
 
 const loggedIn = computed(() => !!auth.token);
+const user = computed(() => auth.user);
 const msgs = computed(() => chat.messages);
 const msgInput = ref("");
 

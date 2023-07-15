@@ -16,6 +16,7 @@ interface UserData {
 	avatar: string;
 	discriminator: string;
 	global_name: string;
+	permission: number;
 }
 
 interface PlayerState {
@@ -24,4 +25,6 @@ interface PlayerState {
 	volume: number;
 	song: Song | null;
 	queue: Song[];
+	anonUsers?: number;
+	knownUsers?: UserData[];
 }
