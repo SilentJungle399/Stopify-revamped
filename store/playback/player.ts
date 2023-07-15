@@ -120,10 +120,13 @@ export default defineStore("player", () => {
 		}
 	};
 	const loadVideoByUrl = (song: Song, sync: boolean = false) => {
-		if (YTplayer.value) {
+		const queue = useQueue();
+		if (YTplayer.value && YTplayer.value.loadVideoByUrl) {
 			YTplayer.value.loadVideoByUrl(
 				`http://www.youtube.com/v/${song.url.split("?v=")[1]}?version=3`
 			);
+		} else {
+			queue.setCurrent(null);
 		}
 	};
 
