@@ -28,7 +28,6 @@ const anonUsers = async () => {
 const playerState: PlayerState = {
 	playing: false,
 	currentTime: 0,
-	volume: 100,
 	song: null,
 	queue: [],
 	autoplay: false,
@@ -344,13 +343,6 @@ io.on("connection", async (socket) => {
 		const user = await checkPermission(token);
 		if (!user || user.permission !== 1) return;
 		playerState.currentTime = time;
-		io.emit("playerState", playerState);
-	});
-
-	socket.on("setSongVolume", async (token: string, volume: number) => {
-		const user = await checkPermission(token);
-		if (!user || user.permission !== 1) return;
-		playerState.volume = volume;
 		io.emit("playerState", playerState);
 	});
 

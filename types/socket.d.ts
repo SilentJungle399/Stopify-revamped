@@ -22,7 +22,6 @@ interface UserData {
 interface PlayerState {
 	playing: boolean;
 	currentTime: number;
-	volume: number;
 	song: Song | null;
 	queue: Song[];
 	autoplay: boolean;

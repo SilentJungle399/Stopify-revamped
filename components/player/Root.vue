@@ -84,6 +84,7 @@
 			</div>
 		</div>
 		<div class="extrabuttons">
+			<PlayerVolume />
 			<span class="control">
 				<span
 					class="material-symbols-outlined audiocontrol"

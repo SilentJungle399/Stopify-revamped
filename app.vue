@@ -102,7 +102,6 @@ onMounted(() => {
 		player.setState({
 			_autoplay: state.autoplay,
 			_loop: state.loop,
-			_volume: state.volume,
 		});
 
 		if (state.anonUsers || state.knownUsers) {

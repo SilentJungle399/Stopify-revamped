@@ -111,14 +111,9 @@ export default defineStore("player", () => {
 			}
 		}
 	};
-	const setVolume = (volume: number, sync: boolean = false) => {
+	const setVolume = (volume: number) => {
 		if (YTplayer.value && YTplayer.value.setVolume) {
 			YTplayer.value.setVolume(volume);
-			if (!sync) {
-				const auth = useAuth();
-				const token = computed(() => auth.token);
-				$io.emit("setSongVolume", token.value, volume);
-			}
 		}
 	};
 	const loadVideoByUrl = (song: Song, sync: boolean = false) => {
@@ -131,17 +126,8 @@ export default defineStore("player", () => {
 			queue.setCurrent(null);
 		}
 	};
-	const setState = ({
-		_autoplay,
-		_volume,
-		_loop,
-	}: {
-		_autoplay: boolean;
-		_volume: number;
-		_loop: 1 | 2 | 3;
-	}) => {
+	const setState = ({ _autoplay, _loop }: { _autoplay: boolean; _loop: 1 | 2 | 3 }) => {
 		autoplay.value = _autoplay;
-		volume.value = _volume;
 		loop.value = _loop;
 	};
 
