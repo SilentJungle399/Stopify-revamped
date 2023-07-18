@@ -99,6 +99,12 @@ onMounted(() => {
 
 		state.playing ? player.play(undefined, true) : player.pause(undefined, true);
 
+		player.setState({
+			_autoplay: state.autoplay,
+			_loop: state.loop,
+			_volume: state.volume,
+		});
+
 		if (state.anonUsers || state.knownUsers) {
 			users.setUsers({
 				known: state.knownUsers || [],

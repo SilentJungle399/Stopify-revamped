@@ -23,12 +23,23 @@
 		</div>
 
 		<div class="controls">
-			<div class="control previous">
+			<div
+				class="control autoplay"
+				@click="() => $io.emit('toggleAutoplay', token)"
+				:style="`opacity: ${autoplay ? '1' : '0.5'};`"
+			>
+				<span class="material-symbols-outlined"> autoplay </span>
+			</div>
+			<div class="control previous" :style="`opacity: ${current ? '1' : '0.5'};`">
 				<span class="material-symbols-outlined" @click="queueData.previous">
 					skip_previous
 				</span>
 			</div>
-			<div class="control playpause" id="playpause">
+			<div
+				class="control playpause"
+				id="playpause"
+				:style="`opacity: ${current ? '1' : '0.5'};`"
+			>
 				<span
 					class="material-symbols-outlined"
 					style="font-size: 45px"
@@ -46,12 +57,29 @@
 					play_circle
 				</span>
 			</div>
-			<div class="control skip">
+			<div class="control skip" :style="`opacity: ${current ? '1' : '0.5'};`">
 				<span
 					class="material-symbols-outlined"
 					@click="() => $io.emit('queueUpdate', 'nextSong', token)"
 				>
 					skip_next
+				</span>
+			</div>
+			<div class="control repeat" :style="`opacity: ${current ? '1' : '0.5'};`">
+				<span
+					class="material-symbols-outlined"
+					@click="() => $io.emit('setLoop', token, loop === 1 ? 2 : 3)"
+					v-if="loop === 1 || loop === 2"
+					:style="`opacity: ${loop === 1 ? '0.5' : '1'}; transition: opacity 0.2s;`"
+				>
+					repeat
+				</span>
+				<span
+					class="material-symbols-outlined"
+					@click="() => $io.emit('setLoop', token, 1)"
+					v-else-if="loop === 3"
+				>
+					repeat_one
 				</span>
 			</div>
 		</div>
@@ -106,6 +134,8 @@ const auth = useAuth();
 const token = computed(() => auth.token);
 const current = computed(() => queueData.current);
 const playing = computed(() => player.playing);
+const autoplay = computed(() => player.autoplay);
+const loop = computed(() => player.loop);
 
 const emits = defineEmits(["switchTab"]);
 const hovering = ref(false);
@@ -130,11 +160,13 @@ const switchTab = (tab: string) => {
 .controls {
 	display: flex;
 	margin: auto;
+	padding: 0 5px;
 }
 
 .control {
 	cursor: pointer;
 	margin: auto 5px;
+	transition: all 0.2s;
 }
 
 .audiocontrol {

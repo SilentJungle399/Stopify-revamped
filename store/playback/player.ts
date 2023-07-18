@@ -6,6 +6,9 @@ export default defineStore("player", () => {
 
 	const YTplayer = ref<any>(undefined);
 	const playing = ref(false);
+	const autoplay = ref(false);
+	const loop = ref(1);
+	const volume = ref(100);
 
 	const events = {
 		onStateChange: (event: any) => {
@@ -18,7 +21,6 @@ export default defineStore("player", () => {
 
 			switch (event.data) {
 				case 0:
-					const auth = useAuth();
 					playing.value = false;
 					break;
 				case 1:
@@ -129,10 +131,26 @@ export default defineStore("player", () => {
 			queue.setCurrent(null);
 		}
 	};
+	const setState = ({
+		_autoplay,
+		_volume,
+		_loop,
+	}: {
+		_autoplay: boolean;
+		_volume: number;
+		_loop: 1 | 2 | 3;
+	}) => {
+		autoplay.value = _autoplay;
+		volume.value = _volume;
+		loop.value = _loop;
+	};
 
 	return {
 		YTplayer,
 		playing,
+		autoplay,
+		loop,
+		volume,
 		play,
 		pause,
 		seek,
@@ -142,5 +160,6 @@ export default defineStore("player", () => {
 		stop,
 		loadVideoByUrl,
 		currentTime,
+		setState,
 	};
 });

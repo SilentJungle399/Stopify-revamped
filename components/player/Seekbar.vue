@@ -19,15 +19,6 @@
 </template>
 
 <script setup lang="ts">
-// export default {
-// 	name: "SeekBar",
-// 	props: {
-// 		draggable: {
-// 			requi#: true,
-// 		},
-// 	},
-// }
-
 import { useSeekbar } from "~/store";
 
 const props = defineProps({
@@ -106,17 +97,17 @@ const down = (event: MouseEvent) => {
 	opacity: 0;
 	transition: opacity 0.5s;
 	height: 10px;
-	border: 4px solid #494c60;
-	border-top-color: #494c60;
-	border-right-color: #494c60;
+	border: 4px solid #9899a5;
+	border-top-color: #9899a5;
+	border-right-color: #9899a5;
 	border-radius: 100%;
-	background-color: #494c60;
+	background-color: #9899a5;
 	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
 	cursor: pointer;
 }
 
 .progress {
-	background: #494c60;
+	background: #9899a5;
 
 	position: fixed;
 	z-index: 1;

@@ -6,6 +6,7 @@ import { ObjectId } from "bson";
 import { DISCORD_SECRET } from "~/config";
 import fs from "fs";
 import whitelist from "./whitelist";
+import ytdl from "ytdl-core";
 
 const io = new Server(3003, {
 	cors: {
@@ -30,6 +31,8 @@ const playerState: PlayerState = {
 	volume: 100,
 	song: null,
 	queue: [],
+	autoplay: false,
+	loop: 1,
 };
 
 const parseDuration = (duration: string) => {
@@ -90,13 +93,58 @@ const checkPermission = async (token: string): Promise<UserData | null> => {
 	return retData;
 };
 
-setInterval(() => {
+const nextSong = async () => {
+	if (!playerState.song) return;
+	if (playerState.queue.length === 0 && playerState.autoplay) {
+		const songData = await ytdl.getInfo(playerState.song.url);
+		const relatedSong = songData.related_videos[Math.floor(Math.random() * 3)];
+		playerState.currentTime = 0;
+		playerState.song = {
+			artist:
+				typeof relatedSong.author === "string"
+					? relatedSong.author
+					: relatedSong.author.name,
+			duration: relatedSong.length_seconds
+				? `${Math.floor(relatedSong.length_seconds / 60)}:${
+						relatedSong.length_seconds % 60
+				  }`
+				: "00:00",
+			thumbnail: relatedSong.thumbnails[0].url,
+			title: relatedSong.title ? relatedSong.title : "Unknown",
+			url: `https://www.youtube.com/watch?v=${relatedSong.id}`,
+			addedBy: "autoplay",
+			id: relatedSong.id ? relatedSong.id : "0",
+			views: 0,
+		};
+		io.emit("playerState", playerState);
+	} else {
+		switch (playerState.loop) {
+			case 1:
+				playerState.currentTime = 0;
+				playerState.song = playerState.queue.shift() || null;
+				io.emit("playerState", playerState);
+				break;
+			case 2:
+				playerState.currentTime = 0;
+				playerState.queue.push(playerState.song);
+				playerState.song = playerState.queue.shift() || null;
+				io.emit("playerState", playerState);
+				break;
+			case 3:
+				playerState.currentTime = 0;
+				io.emit("playerState", playerState);
+				break;
+			default:
+				break;
+		}
+	}
+};
+
+setInterval(async () => {
 	if (playerState.song && playerState.playing) {
 		playerState.currentTime += 0.5;
 		if (playerState.currentTime > parseDuration(playerState.song.duration)) {
-			playerState.currentTime = 0;
-			playerState.song = playerState.queue.shift() || null;
-			io.emit("playerState", playerState);
+			await nextSong();
 		}
 	} else if (!playerState.song) {
 		playerState.currentTime = 0;
@@ -306,6 +354,20 @@ io.on("connection", async (socket) => {
 		io.emit("playerState", playerState);
 	});
 
+	socket.on("toggleAutoplay", async (token: string) => {
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
+		playerState.autoplay = !playerState.autoplay;
+		io.emit("playerState", playerState);
+	});
+
+	socket.on("setLoop", async (token: string, loop: 1 | 2 | 3) => {
+		const user = await checkPermission(token);
+		if (!user || user.permission !== 1) return;
+		playerState.loop = loop;
+		io.emit("playerState", playerState);
+	});
+
 	socket.on(
 		"queueUpdate",
 		async (
@@ -324,9 +386,7 @@ io.on("connection", async (socket) => {
 							`${user.global_name} skipped ${shorten(playerState.song?.title)}!`
 						);
 
-					playerState.song = playerState.queue.shift() || null;
-					playerState.playing = playerState.song !== null;
-					playerState.currentTime = 0;
+					await nextSong();
 					io.emit("playerState", playerState);
 					break;
 				case "removeSong":

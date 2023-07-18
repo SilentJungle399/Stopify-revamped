@@ -25,6 +25,9 @@ interface PlayerState {
 	volume: number;
 	song: Song | null;
 	queue: Song[];
+	autoplay: boolean;
+	loop: 1 | 2 | 3;
+
 	anonUsers?: number;
 	knownUsers?: UserData[];
 }
