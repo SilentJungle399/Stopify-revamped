@@ -1,5 +1,7 @@
 <template>
-	<div class="lyrics-area">hi</div>
+	<div class="lyrics-area">
+		<div class="lyrics" v-html="$attrs.lyrics ?? 'No lyrics found.'"></div>
+	</div>
 </template>
 
 <style>
@@ -11,5 +13,14 @@
 	position: fixed;
 	top: 0;
 	left: 400px;
+	overflow-y: auto;
+}
+
+.lyrics {
+	text-align: center;
+	font-size: 30px;
+	line-height: 55px;
+	font-family: Arial, Helvetica, sans-serif;
+	margin: 50px auto;
 }
 </style>

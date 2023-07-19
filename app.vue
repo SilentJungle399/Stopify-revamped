@@ -5,7 +5,7 @@
 	<PlayerRoot @switchTab="(tab: string) => (currTab = tab)"></PlayerRoot>
 
 	<ChatArea v-if="currTab === 'chat'"></ChatArea>
-	<Lyrics v-if="currTab === 'lyrics'"></Lyrics>
+	<Lyrics v-if="currTab === 'lyrics'" :lyrics="lyrics"></Lyrics>
 </template>
 
 <script setup lang="ts">
@@ -24,6 +24,7 @@ const current = computed(() => queueData.current);
 const playing = computed(() => player.playing);
 
 const currTab = ref("chat");
+const lyrics = ref("No lyrics available.");
 
 const onYouTubeIframeAPIReady = () => {
 	player.setYTplayer(
@@ -85,8 +86,9 @@ onMounted(() => {
 		queueData.setQueue(state.queue);
 		queueData.setCurrent(state.song);
 
-		if (!state.song && playing.value) {
-			player.stop(true);
+		if (!state.song) {
+			lyrics.value = "No lyrics available.";
+			if (playing.value) player.stop(true);
 		}
 
 		if (
@@ -94,7 +96,6 @@ onMounted(() => {
 			state.currentTime + 5 < player.currentTime()
 		) {
 			player.seek(state.currentTime, true);
-			// player.play(undefined, true);
 		}
 
 		state.playing ? player.play(undefined, true) : player.pause(undefined, true);
@@ -110,6 +111,10 @@ onMounted(() => {
 				anon: state.anonUsers || 0,
 			});
 		}
+	});
+
+	$io.on("lyricsResponse", (_lyrics: string) => {
+		lyrics.value = _lyrics;
 	});
 
 	$io.emit(

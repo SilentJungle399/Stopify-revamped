@@ -9,5 +9,5 @@ dist
 .DS_Store
 .fleet
 .idea
-config.ts
+config.json
 fix

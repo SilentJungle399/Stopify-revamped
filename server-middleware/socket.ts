@@ -19,6 +19,9 @@ const clientId = "900755240532471888";
 const redirectUritest = "http://localhost:3000/api/callback";
 const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
 
+const lyricsAPItest = "http://localhost:25690/?q=";
+const lyricsAPIprod = "https://lyrics.silentjungle.me/?q=";
+
 const sockConns = new Map<string, UserData>();
 const anonUsers = async () => {
 	const sockets = await io.fetchSockets();
@@ -44,7 +47,19 @@ const shorten = (content: string | undefined) => {
 };
 
 const getLyrics = async (name: string) => {
-	// const res = await fetch(url);
+	const res = await fetch(
+		(process.env.NODE_ENV === "production" ? lyricsAPIprod : lyricsAPItest) + name,
+		{
+			headers: {
+				Authorization: LYRICS_SECRET,
+			},
+		}
+	);
+
+	if (res.status !== 200) return "No lyrics available.";
+
+	const data = await res.text();
+	return data;
 };
 
 const sendSystemMessage = async (message: string) => {
@@ -106,18 +121,28 @@ const nextSong = async () => {
 			id: relatedSong.id ? relatedSong.id : "0",
 			views: 0,
 		};
+		const lyrics = await getLyrics(playerState.song.title);
+		io.emit("lyricsResponse", lyrics);
 		io.emit("playerState", playerState);
 	} else {
 		switch (playerState.loop) {
 			case 1:
 				playerState.currentTime = 0;
 				playerState.song = playerState.queue.shift() || null;
+				if (playerState.song) {
+					const lyrics = await getLyrics(playerState.song.title);
+					io.emit("lyricsResponse", lyrics);
+				}
 				io.emit("playerState", playerState);
 				break;
 			case 2:
 				playerState.currentTime = 0;
 				playerState.queue.push(playerState.song);
 				playerState.song = playerState.queue.shift() || null;
+				if (playerState.song) {
+					const lyrics = await getLyrics(playerState.song.title);
+					io.emit("lyricsResponse", lyrics);
+				}
 				io.emit("playerState", playerState);
 				break;
 			case 3:
@@ -389,6 +414,8 @@ io.on("connection", async (socket) => {
 							playerState.song = song;
 							playerState.playing = true;
 							playerState.currentTime = 0;
+							const lyrics = await getLyrics(playerState.song?.title!);
+							io.emit("lyricsResponse", lyrics);
 						}
 					} else {
 						playerState.queue.push(song!);
@@ -403,9 +430,9 @@ io.on("connection", async (socket) => {
 		}
 	);
 
-	socket.on("lyricsRequest", async (url: string) => {
-		// const lyrics = await getLyrics(url);
-		// io.emit("lyricsResponse", lyrics);
+	socket.on("lyricsRequest", async (name: string) => {
+		const lyrics = await getLyrics(name);
+		socket.emit("lyricsResponse", lyrics);
 	});
 
 	socket.on("disconnecting", () => {
