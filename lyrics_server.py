@@ -9,6 +9,7 @@ ytmusic = YTMusic()
 db = motor.motor_asyncio.AsyncIOMotorClient().stopify
 
 async def handle(request: web.Request):
+
 	auth = request.headers.get('Authorization')
 	if not auth:
 		return web.Response(status=401, text='Missing Authorization header')
@@ -18,6 +19,8 @@ async def handle(request: web.Request):
 	query = request.query.get('q')
 	if not query:
 		return web.Response(status=400, text='Missing query parameter: q')
+
+	print("Lyrics requested for: " + query)
 	
 	results = ytmusic.search(query, filter="songs")
 	if len(results) == 0:
@@ -37,6 +40,6 @@ async def handle(request: web.Request):
 	return web.Response(status=200, text=lyrics["lyrics"].replace('\n', '<br>'))
 
 app = web.Application()
-app.add_routes([web.get('/', handle)])
+app.add_routes([web.get('/', handle), web.get('/lyrics', handle)])
 
 web.run_app(app, port = 25690)

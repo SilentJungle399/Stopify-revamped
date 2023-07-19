@@ -8,7 +8,7 @@ import fs from "fs";
 import whitelist from "./whitelist";
 import ytdl from "ytdl-core";
 
-const io = new Server(3003, {
+const io = new Server(process.env.NODE_ENV === "production" ? 25692 : 3003, {
 	cors: {
 		origin: "*",
 	},
@@ -20,7 +20,7 @@ const redirectUritest = "http://localhost:3000/api/callback";
 const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
 
 const lyricsAPItest = "http://localhost:25690/?q=";
-const lyricsAPIprod = "https://lyrics.silentjungle.me/?q=";
+const lyricsAPIprod = "https://stopify.silentjungle.me/lyrics?q=";
 
 const sockConns = new Map<string, UserData>();
 const anonUsers = async () => {
