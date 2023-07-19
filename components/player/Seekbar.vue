@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSeekbar } from "~/store";
+import { useSeekbar, useAuth } from "~/store";
 
 const props = defineProps({
 	draggable: {
@@ -29,11 +29,14 @@ const props = defineProps({
 });
 
 const seekbar = useSeekbar();
+const auth = useAuth();
+const { $io } = useNuxtApp();
+
+const token = computed(() => auth.token);
 const show = ref(false);
 const lis = ref(false);
 
 const mousemove = (event: MouseEvent) => {
-	// $store.commit("progInc", (event.clientX * 100) / window.innerWidth);
 	seekbar.setProgress((event.clientX * 100) / window.innerWidth);
 };
 const showPeg = (ev: boolean) => {
@@ -45,17 +48,19 @@ const seek = (event: MouseEvent) => {
 	if (!props.draggable) return;
 	const perc = (event.clientX * 100) / window.innerWidth;
 
-	// $emit("progressUpdate", perc);
-	// $emit("seekAttempt", perc);
+	$io.emit("seekSong", token.value, perc);
 	seekbar.setProgress(perc);
 };
 const removelistener = (event: MouseEvent) => {
+	console.log(lis.value);
 	if (!lis.value) return;
 	window.removeEventListener("mousemove", mousemove);
 	lis.value = false;
 	const perc = (event.clientX * 100) / window.innerWidth;
-	// $emit("seekAttempt", perc);
-	seekbar.setDragging(false);
+	$io.emit("seekSong", token.value, perc);
+	setTimeout(() => {
+		seekbar.setDragging(false);
+	}, 500);
 };
 const down = (event: MouseEvent) => {
 	if (props.draggable) {
@@ -71,13 +76,11 @@ const down = (event: MouseEvent) => {
 .seekBar {
 	background: #373a50;
 	user-select: none;
-
 	position: fixed;
 	z-index: 1;
 	bottom: 100px;
 	left: 0;
 	padding: 1px;
-
 	width: 100%;
 	height: 2px;
 }
@@ -90,7 +93,7 @@ const down = (event: MouseEvent) => {
 	user-select: none;
 	display: block;
 	position: absolute;
-	z-index: 2;
+	z-index: 200;
 	margin-top: -8px;
 	margin-left: -10px;
 	width: 10px;
@@ -108,13 +111,11 @@ const down = (event: MouseEvent) => {
 
 .progress {
 	background: #9899a5;
-
 	position: fixed;
 	z-index: 1;
 	bottom: 100px;
 	left: 0;
 	padding: 1px;
-
 	height: 2px;
 }
 </style>

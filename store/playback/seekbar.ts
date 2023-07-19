@@ -4,7 +4,8 @@ export default defineStore("seekbar", () => {
 	const progress = ref(0);
 	const dragging = ref(false);
 
-	const setProgress = (value: number) => {
+	const setProgress = (value: number, auto: boolean = false) => {
+		if (dragging.value && auto) return;
 		progress.value = value;
 	};
 

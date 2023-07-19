@@ -3,7 +3,7 @@ import ytsr from "ytsr";
 import fetch from "node-fetch";
 import clientPromise from "~/utils/mongo";
 import { ObjectId } from "bson";
-import { DISCORD_SECRET } from "~/config";
+import { DISCORD_SECRET, LYRICS_SECRET } from "~/config.json";
 import fs from "fs";
 import whitelist from "./whitelist";
 import ytdl from "ytdl-core";
@@ -43,17 +43,8 @@ const shorten = (content: string | undefined) => {
 	return content ? (content.length > 20 ? content?.substring(0, 20) + "..." : content) : content;
 };
 
-const getLyrics = async (url: string) => {
-	console.log("Getting lyrics");
-	console.log(url);
-	const res = await fetch(url);
-	const text = await res.text();
-
-	fs.writeFileSync("test.txt", text);
-
-	// console.log(text.includes("timedtext)"));
-	// const transcriptUrl = text.match(/"https:\/\/www\.youtube\.com\/api\/timedtext(.*?)"/g);
-	// console.log(transcriptUrl);
+const getLyrics = async (name: string) => {
+	// const res = await fetch(url);
 };
 
 const sendSystemMessage = async (message: string) => {
@@ -308,6 +299,8 @@ io.on("connection", async (socket) => {
 			const messages = await db
 				.collection("messages")
 				.find(timestamp ? { timestamp: { $lt: timestamp } } : {})
+				.sort({ timestamp: -1 })
+				.limit(50)
 				.toArray();
 			const retMsgs = messages.map((msg) => {
 				const retMsg = {
@@ -339,10 +332,10 @@ io.on("connection", async (socket) => {
 		io.emit("playerState", playerState);
 	});
 
-	socket.on("seekSong", async (token: string, time: number) => {
+	socket.on("seekSong", async (token: string, perc: number) => {
 		const user = await checkPermission(token);
 		if (!user || user.permission !== 1) return;
-		playerState.currentTime = time;
+		playerState.currentTime = (parseDuration(playerState.song?.duration!) * perc) / 100;
 		io.emit("playerState", playerState);
 	});
 

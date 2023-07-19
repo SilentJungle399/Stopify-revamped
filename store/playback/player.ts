@@ -57,9 +57,9 @@ export default defineStore("player", () => {
 			if (YTplayer.value.getCurrentTime && current) {
 				const currentPos = YTplayer.value.getCurrentTime();
 				const duration = YTplayer.value.getDuration();
-				seekbar.setProgress((currentPos / duration) * 100);
+				seekbar.setProgress((currentPos / duration) * 100, true);
 			} else {
-				seekbar.setProgress(0);
+				seekbar.setProgress(0, true);
 			}
 		}, 100);
 	};
@@ -98,7 +98,7 @@ export default defineStore("player", () => {
 			}
 			playing.value = false;
 			const seekbar = useSeekbar();
-			seekbar.setProgress(0);
+			seekbar.setProgress(0, true);
 		}
 	};
 	const seek = (time: number, sync: boolean = false) => {
