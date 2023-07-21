@@ -1,10 +1,8 @@
 import { Server } from "socket.io";
-import ytsr from "ytsr";
 import fetch from "node-fetch";
 import clientPromise from "~/utils/mongo";
 import { ObjectId } from "bson";
-import { DISCORD_SECRET, LYRICS_SECRET } from "~/config.json";
-import fs from "fs";
+import { DISCORD_SECRET, YTMUSIC_SECRET } from "~/config.json";
 import whitelist from "./whitelist";
 import ytdl from "ytdl-core";
 
@@ -16,11 +14,14 @@ const io = new Server(process.env.NODE_ENV === "production" ? 25692 : 3003, {
 
 const clientId = "900755240532471888";
 
-const redirectUritest = "http://localhost:3000/api/callback";
-const redirectUriprod = "https://stopify.silentjungle.me/api/callback";
-
-const lyricsAPItest = "http://localhost:25690/?q=";
-const lyricsAPIprod = "https://stopify.silentjungle.me/lyrics?q=";
+const redirectUri =
+	process.env.NODE_ENV === "production"
+		? "https://stopify.silentjungle.me/api/callback"
+		: "http://localhost:3000/api/callback";
+const ytMusicApi =
+	process.env.NODE_ENV === "production"
+		? "https://stopify.silentjungle.me/ytm"
+		: "http://localhost:8080";
 
 const sockConns = new Map<string, UserData>();
 const anonUsers = async () => {
@@ -46,15 +47,12 @@ const shorten = (content: string | undefined) => {
 	return content ? (content.length > 20 ? content?.substring(0, 20) + "..." : content) : content;
 };
 
-const getLyrics = async (name: string) => {
-	const res = await fetch(
-		(process.env.NODE_ENV === "production" ? lyricsAPIprod : lyricsAPItest) + name,
-		{
-			headers: {
-				Authorization: LYRICS_SECRET,
-			},
-		}
-	);
+const getLyrics = async (_id: string) => {
+	const res = await fetch(ytMusicApi + "/lyrics?id=" + _id, {
+		headers: {
+			Authorization: YTMUSIC_SECRET,
+		},
+	});
 
 	if (res.status !== 200) return "No lyrics available.";
 
@@ -101,27 +99,15 @@ const checkPermission = async (token: string): Promise<UserData | null> => {
 const nextSong = async () => {
 	if (!playerState.song) return;
 	if (playerState.queue.length === 0 && playerState.autoplay) {
-		const songData = await ytdl.getInfo(playerState.song.url);
-		const relatedSong = songData.related_videos[Math.floor(Math.random() * 3)];
 		playerState.currentTime = 0;
-		playerState.song = {
-			artist:
-				typeof relatedSong.author === "string"
-					? relatedSong.author
-					: relatedSong.author.name,
-			duration: relatedSong.length_seconds
-				? `${Math.floor(relatedSong.length_seconds / 60)}:${
-						relatedSong.length_seconds % 60
-				  }`
-				: "00:00",
-			thumbnail: relatedSong.thumbnails[0].url,
-			title: relatedSong.title ? relatedSong.title : "Unknown",
-			url: `https://www.youtube.com/watch?v=${relatedSong.id}`,
-			addedBy: "autoplay",
-			id: relatedSong.id ? relatedSong.id : "0",
-			views: 0,
-		};
-		const lyrics = await getLyrics(playerState.song.title);
+		const relatedSong = await fetch(ytMusicApi + "/suggestion?id=" + playerState.song.id, {
+			headers: {
+				Authorization: YTMUSIC_SECRET,
+			},
+		});
+		playerState.song = (await relatedSong.json()) as Song;
+		playerState.song.addedBy = "autoplay";
+		const lyrics = await getLyrics(playerState.song.id);
 		io.emit("lyricsResponse", lyrics);
 		io.emit("playerState", playerState);
 	} else {
@@ -130,7 +116,7 @@ const nextSong = async () => {
 				playerState.currentTime = 0;
 				playerState.song = playerState.queue.shift() || null;
 				if (playerState.song) {
-					const lyrics = await getLyrics(playerState.song.title);
+					const lyrics = await getLyrics(playerState.song.id);
 					io.emit("lyricsResponse", lyrics);
 				}
 				io.emit("playerState", playerState);
@@ -140,7 +126,7 @@ const nextSong = async () => {
 				playerState.queue.push(playerState.song);
 				playerState.song = playerState.queue.shift() || null;
 				if (playerState.song) {
-					const lyrics = await getLyrics(playerState.song.title);
+					const lyrics = await getLyrics(playerState.song.id);
 					io.emit("lyricsResponse", lyrics);
 				}
 				io.emit("playerState", playerState);
@@ -183,21 +169,8 @@ io.on("connection", async (socket) => {
 	}, 5000);
 
 	socket.on("songSearch", async (query: string) => {
-		const searchResults = await ytsr(query, { limit: 15 });
-		socket.emit(
-			"songSearchResults",
-			searchResults.items
-				.filter((item) => item.type === "video")
-				.map((item) => ({
-					artist: item.type === "video" ? item.author?.name : "Unknown",
-					duration: item.type === "video" ? item.duration : "00:00",
-					thumbnail: item.type === "video" ? item.bestThumbnail.url : "",
-					title: item.type === "video" ? item.title : "Unknown",
-					url: item.type === "video" ? item.url : "",
-					views: item.type === "video" ? item.views : 0,
-					id: item.type === "video" ? item.id + Date.now() : "",
-				}))
-		);
+		const searchResults = await fetch(ytMusicApi + "/search?q=" + query);
+		socket.emit("songSearchResults", await searchResults.json());
 	});
 
 	socket.on("validateLogin", async (code: string, callback) => {
@@ -209,8 +182,7 @@ io.on("connection", async (socket) => {
 					client_id: clientId,
 					client_secret: DISCORD_SECRET,
 					grant_type: "authorization_code",
-					redirect_uri:
-						process.env.NODE_ENV === "production" ? redirectUriprod : redirectUritest,
+					redirect_uri: redirectUri,
 					code,
 				}),
 				headers: {
@@ -414,7 +386,7 @@ io.on("connection", async (socket) => {
 							playerState.song = song;
 							playerState.playing = true;
 							playerState.currentTime = 0;
-							const lyrics = await getLyrics(playerState.song?.title!);
+							const lyrics = await getLyrics(playerState.song?.id!);
 							io.emit("lyricsResponse", lyrics);
 						}
 					} else {
@@ -430,8 +402,8 @@ io.on("connection", async (socket) => {
 		}
 	);
 
-	socket.on("lyricsRequest", async (name: string) => {
-		const lyrics = await getLyrics(name);
+	socket.on("lyricsRequest", async (_id: string) => {
+		const lyrics = await getLyrics(_id);
 		socket.emit("lyricsResponse", lyrics);
 	});
 

@@ -7,7 +7,8 @@
 		"generate": "nuxt generate",
 		"preview": "nuxt preview",
 		"postinstall": "nuxt prepare",
-		"prodtest": "NODE_ENV=production node .output/server/index.mjs"
+		"prodtest": "NODE_ENV=production node .output/server/index.mjs",
+		"yt": "PY_ENV=development python3 ytmusic/main.py"
 	},
 	"devDependencies": {
 		"@types/node": "^18",

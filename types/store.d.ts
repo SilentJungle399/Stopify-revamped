@@ -7,6 +7,8 @@ interface Song {
 	views: number;
 	addedBy: string | null;
 	id: string;
+	type?: "video" | "song";
+	category?: string;
 }
 
 interface PartialMessage {

@@ -91,7 +91,7 @@
 					@click="
 						() => {
 							switchTab('lyrics');
-							$io.emit('lyricsRequest', current?.title);
+							$io.emit('lyricsRequest', current?.id);
 						}
 					"
 				>

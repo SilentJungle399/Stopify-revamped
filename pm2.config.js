@@ -9,8 +9,8 @@ module.exports = {
 			},
 		},
 		{
-			name: "lyrics-server",
-			script: "lyrics_server.py",
+			name: "ytmusic-server",
+			script: "ytmusic/main.py",
 			interpreter: "python3",
 		},
 	],

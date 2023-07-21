@@ -6,10 +6,27 @@
 		placeholder="Enter song name or YouTube URL"
 	/>
 	<div class="results-section">
+		<h1 v-if="songResults.length > 0">Songs</h1>
 		<div
 			class="youtube-result"
 			v-for="song in songResults"
 			@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
+			v-if="songResults.length > 0"
+		>
+			<div class="youtube-result-thumbnail">
+				<img :src="song.thumbnail" />
+			</div>
+			<div class="youtube-result-desc">
+				<div class="youtube-result-title">{{ song.title }}</div>
+				<div class="youtube-result-artist">{{ song.artist }}</div>
+			</div>
+		</div>
+		<h1 v-if="videoResults.length > 0">Videos</h1>
+		<div
+			class="youtube-result"
+			v-for="song in videoResults"
+			@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
+			v-if="videoResults.length > 0"
 		>
 			<div class="youtube-result-thumbnail">
 				<img :src="song.thumbnail" />
@@ -32,16 +49,15 @@ const token = computed(() => auth.token);
 
 const songInput = ref("");
 const songResults = ref<Song[]>([]);
+const videoResults = ref<Song[]>([]);
 
-const songSearch = () => {
-	$io.emit("songSearch", songInput.value);
+const songSearch = async () => {
+	const { data } = await useFetch("/api/search?query=" + songInput.value);
+	// @ts-ignore
+	songResults.value = data.value.filter((x: Song) => x.type === "song");
+	// @ts-ignore
+	videoResults.value = data.value.filter((x: Song) => x.type === "video");
 };
-
-onMounted(() => {
-	$io.on("songSearchResults", (data: Song[]) => {
-		songResults.value = data;
-	});
-});
 </script>
 
 <style scoped>
@@ -82,6 +98,14 @@ input:focus {
 
 img {
 	height: 50px;
+}
+
+h1 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: 400;
+    margin-left: 30px;
+    margin-bottom: 10px;
+
 }
 
 .youtube-result-desc {
