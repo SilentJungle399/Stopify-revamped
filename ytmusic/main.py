@@ -77,7 +77,7 @@ async def search(request: web.Request):
 	if len(results) == 0:
 		return web.Response(status=404, text='No results found')
 
-	ret = list(map(format_result, filter(lambda x: x['resultType'] in ['song', 'video'] and len(x['artists']) > 0, results)))
+	ret = list(map(format_result, filter(lambda x: x['resultType'] in ['song', 'video'] and len(x['artists']) > 0 and x.get("duration"), results)))
 
 	return web.Response(status=200, text=json.dumps(ret), content_type='application/json')
 

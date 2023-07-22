@@ -7,13 +7,18 @@
 	/>
 	<div class="results-section">
 		<h1 v-if="songResults.length > 0">Songs</h1>
-		<div
-			class="youtube-result"
-			v-for="song in songResults"
-			@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
-			v-if="songResults.length > 0"
-		>
+		<div class="youtube-result" v-for="song in songResults" v-if="songResults.length > 0">
 			<div class="youtube-result-thumbnail">
+				<button class="add" @click="() => $io.emit('queueUpdate', 'addSong', token, song)">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						height="48"
+						viewBox="0 -960 960 960"
+						width="48"
+					>
+						<path d="M450-450H200v-60h250v-250h60v250h250v60H510v250h-60v-250Z" />
+					</svg>
+				</button>
 				<img :src="song.thumbnail" />
 			</div>
 			<div class="youtube-result-desc">
@@ -22,13 +27,18 @@
 			</div>
 		</div>
 		<h1 v-if="videoResults.length > 0">Videos</h1>
-		<div
-			class="youtube-result"
-			v-for="song in videoResults"
-			@click="() => $io.emit('queueUpdate', 'addSong', token, song)"
-			v-if="videoResults.length > 0"
-		>
+		<div class="youtube-result" v-for="song in videoResults" v-if="videoResults.length > 0">
 			<div class="youtube-result-thumbnail">
+				<button class="add" @click="() => $io.emit('queueUpdate', 'addSong', token, song)">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						height="48"
+						viewBox="0 -960 960 960"
+						width="48"
+					>
+						<path d="M450-450H200v-60h250v-250h60v250h250v60H510v250h-60v-250Z" />
+					</svg>
+				</button>
 				<img :src="song.thumbnail" />
 			</div>
 			<div class="youtube-result-desc">
@@ -98,14 +108,14 @@ input:focus {
 
 img {
 	height: 50px;
+	transition: 0.2s;
 }
 
 h1 {
 	font-family: Arial, Helvetica, sans-serif;
 	font-weight: 400;
-    margin-left: 30px;
-    margin-bottom: 10px;
-
+	margin-left: 30px;
+	margin-bottom: 10px;
 }
 
 .youtube-result-desc {
@@ -121,5 +131,39 @@ h1 {
 	font-size: 15px;
 	color: gray;
 	margin-top: 5px;
+}
+
+.add {
+	position: absolute;
+	background: none;
+	padding: 0;
+	z-index: 10;
+	margin: 0;
+	border: 0;
+	height: -webkit-fill-available;
+	width: -webkit-fill-available;
+	margin: auto 10px;
+	opacity: 0;
+	transition: 0.2s;
+	cursor: pointer;
+}
+
+.add > svg {
+	fill: white;
+	height: 35px;
+	width: 35px;
+}
+
+.youtube-result-thumbnail {
+	display: flex;
+	position: relative;
+}
+
+.youtube-result-thumbnail:hover img {
+	opacity: 0.4;
+}
+
+.youtube-result-thumbnail:hover .add {
+	opacity: 1;
 }
 </style>
