@@ -73,7 +73,6 @@ onMounted(() => {
 	align-items: center;
 	padding: 10px;
 	margin: 10px 20px;
-	margin-bottom: 0;
 	padding-bottom: 0;
 	font-family: Arial, Helvetica, sans-serif;
 }
