@@ -249,6 +249,30 @@ io.on("connection", async (socket) => {
 		callback(retData);
 	});
 
+	socket.on("electron-auth", async (data: { token: string; sockId: string }, callback) => {
+		const db = (await clientPromise).db();
+		const users = db.collection("users");
+		const user = await users.findOne({ _id: new ObjectId(data.token) });
+
+		if (user) {
+			const userData: UserData = {
+				id: user.id,
+				username: user.username,
+				avatar: user.avatar,
+				discriminator: user.discriminator,
+				global_name: user.global_name,
+				permission: whitelist[user.id] || 3,
+			};
+			sockConns.set(data.sockId, userData);
+			io.emit("userJoin", userData);
+			io.to(data.sockId).emit("electron-auth", {
+				data: userData,
+				token: data.token,
+			});
+			callback();
+		}
+	});
+
 	socket.on("roomUsersRequest", async (callback) => {
 		const unknownUsers = await anonUsers();
 		callback({
@@ -333,6 +357,9 @@ io.on("connection", async (socket) => {
 		const user = await checkPermission(token);
 		if (!user || user.permission !== 1) return;
 		playerState.currentTime = (parseDuration(playerState.song?.duration!) * perc) / 100;
+		await sendSystemMessage(
+			`${user.global_name} seeked to ${Math.floor(playerState.currentTime)} seconds.`
+		);
 		io.emit("playerState", playerState);
 	});
 
@@ -340,6 +367,9 @@ io.on("connection", async (socket) => {
 		const user = await checkPermission(token);
 		if (!user || user.permission !== 1) return;
 		playerState.autoplay = !playerState.autoplay;
+		await sendSystemMessage(
+			`${user.global_name} turned ${playerState.autoplay ? "on" : "off"} autoplay.`
+		);
 		io.emit("playerState", playerState);
 	});
 
@@ -347,6 +377,9 @@ io.on("connection", async (socket) => {
 		const user = await checkPermission(token);
 		if (!user || user.permission !== 1) return;
 		playerState.loop = loop;
+		await sendSystemMessage(
+			`${user.global_name} set loop to ${loop === 1 ? "off" : loop === 2 ? "queue" : "song"}.`
+		);
 		io.emit("playerState", playerState);
 	});
 
@@ -422,3 +455,5 @@ export default fromNodeMiddleware(async (req, res) => {
 	res.statusCode = 200;
 	res.end();
 });
+
+export { io };

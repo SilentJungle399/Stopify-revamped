@@ -94,49 +94,49 @@ const sendMessage = (e: KeyboardEvent) => {
 	}
 };
 
-const login = () => {
+const login = async () => {
+	const url = window.location.href.includes("silentjungle.me")
+		? "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=https%3A%2F%2Fstopify.silentjungle.me%2Fapi%2Fcallback&response_type=code&scope=identify"
+		: "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fcallback&response_type=code&scope=identify";
+
+	const urlresp = window.location.href.includes("silentjungle.me")
+		? "https://stopify.silentjungle.me"
+		: "http://localhost:3000";
+
 	const params =
 		"scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no,\n" +
 		"width=700,height=800,left=50%,top=50%";
 
-	// prettier-ignore
-	const urltest = "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fcallback&response_type=code&scope=identify";
-	const urlresptest = "http://localhost:3000";
-	// prettier-ignore
-	const urlprod = "https://discord.com/api/oauth2/authorize?client_id=900755240532471888&redirect_uri=https%3A%2F%2Fstopify.silentjungle.me%2Fapi%2Fcallback&response_type=code&scope=identify"
-	const urlrespprod = "https://stopify.silentjungle.me";
+	// @ts-ignore
+	const electron = window.electron;
+	if (electron) {
+		window.open(`${urlresp}/api/auth/${$io.id}`, "Discord Auth", params);
+	} else {
+		const popup = window.open(url, "Discord Auth", params);
 
-	const popup = window.open(
-		window.location.href.includes("silentjungle.me") ? urlprod : urltest,
-		"Discord Auth",
-		params
-	);
+		const interval = setInterval(() => {
+			popup?.postMessage("", urlresp);
+		}, 500);
 
-	const interval = setInterval(() => {
-		popup?.postMessage(
-			"",
-			window.location.href.includes("silentjungle.me") ? urlrespprod : urlresptest
+		window.addEventListener(
+			"message",
+			(event) => {
+				if (event.data.code) {
+					clearInterval(interval);
+					popup?.close();
+					$io.emit(
+						"validateLogin",
+						event.data.code,
+						({ data, token }: { data: UserData; token: string }) => {
+							localStorage.setItem("token", token);
+							auth.setAuth({ token, user: data });
+						}
+					);
+				}
+			},
+			false
 		);
-	}, 500);
-
-	window.addEventListener(
-		"message",
-		(event) => {
-			if (event.data.code) {
-				clearInterval(interval);
-				popup?.close();
-				$io.emit(
-					"validateLogin",
-					event.data.code,
-					({ data, token }: { data: UserData; token: string }) => {
-						localStorage.setItem("token", token);
-						auth.setAuth({ token, user: data });
-					}
-				);
-			}
-		},
-		false
-	);
+	}
 };
 </script>
 

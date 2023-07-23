@@ -82,6 +82,8 @@ onMounted(() => {
 
 	$io.on("playerState", (state: PlayerState) => {
 		console.log(state);
+		// @ts-ignore
+		if (window.electron) window.electron.playerState(state);
 
 		queueData.setQueue(state.queue);
 		queueData.setCurrent(state.song);
@@ -111,6 +113,12 @@ onMounted(() => {
 				anon: state.anonUsers || 0,
 			});
 		}
+	});
+
+	$io.on("electron-auth", ({ data, token }: { data: UserData; token: string }) => {
+		localStorage.setItem("token", token);
+		auth.setAuth({ token, user: data });
+		users.addKnownUser(data);
 	});
 
 	$io.on("lyricsResponse", (_lyrics: string) => {
