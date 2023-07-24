@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
 							token: token,
 							sockId: electron
 						},
-						callback() {
+						() => {
 							window.close()
 						});
 					}

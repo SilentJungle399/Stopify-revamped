@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 					token: token,
 					sockId: "${sockId}"
 				},
-				callback() {
+				() => {
 					window.close()
 				});
 			})
