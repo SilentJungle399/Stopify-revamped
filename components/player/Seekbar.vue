@@ -52,7 +52,6 @@ const seek = (event: MouseEvent) => {
 	seekbar.setProgress(perc);
 };
 const removelistener = (event: MouseEvent) => {
-	console.log(lis.value);
 	if (!lis.value) return;
 	window.removeEventListener("mousemove", mousemove);
 	lis.value = false;

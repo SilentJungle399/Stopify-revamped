@@ -54,3 +54,10 @@ interface Message extends PartialMessage {
 	timestamp: number;
 	user: UserData;
 }
+
+interface LyricsLine {
+	startTimeMs: number;
+	words: string;
+	syllables: any[];
+	endTimeMs: number;
+}

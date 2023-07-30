@@ -24,7 +24,7 @@ const current = computed(() => queueData.current);
 const playing = computed(() => player.playing);
 
 const currTab = ref("chat");
-const lyrics = ref("No lyrics available.");
+const lyrics = ref<LyricsLine[]>([]);
 
 const onYouTubeIframeAPIReady = () => {
 	player.setYTplayer(
@@ -54,6 +54,21 @@ const login = () => {
 			users.addAnonUser();
 		}
 	});
+};
+
+const fetchLyrics = async () => {
+	if (!current.value) return [];
+
+	const { data } = await useFetch(
+		"/api/lyrics?query=" + encodeURIComponent(current.value?.title),
+		{
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: localStorage.getItem("token") ?? "",
+			},
+		}
+	);
+	return data.value as LyricsLine[];
 };
 
 onMounted(() => {
@@ -89,7 +104,7 @@ onMounted(() => {
 		queueData.setCurrent(state.song);
 
 		if (!state.song) {
-			lyrics.value = "No lyrics available.";
+			lyrics.value = [];
 			if (playing.value) player.stop(true);
 		}
 
@@ -121,8 +136,10 @@ onMounted(() => {
 		users.addKnownUser(data);
 	});
 
-	$io.on("lyricsResponse", (_lyrics: string) => {
-		lyrics.value = _lyrics;
+	$io.on("lyricsResponse", () => {
+		setTimeout(async () => {
+			lyrics.value = await fetchLyrics();
+		}, 2000);
 	});
 
 	$io.emit(

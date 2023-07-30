@@ -47,19 +47,6 @@ const shorten = (content: string | undefined) => {
 	return content ? (content.length > 20 ? content?.substring(0, 20) + "..." : content) : content;
 };
 
-const getLyrics = async (_id: string) => {
-	const res = await fetch(ytMusicApi + "/lyrics?id=" + _id, {
-		headers: {
-			Authorization: YTMUSIC_SECRET,
-		},
-	});
-
-	if (res.status !== 200) return "No lyrics available.";
-
-	const data = await res.text();
-	return data;
-};
-
 const sendSystemMessage = async (message: string) => {
 	const msg = {
 		timestamp: Date.now(),
@@ -107,8 +94,7 @@ const nextSong = async () => {
 		});
 		playerState.song = (await relatedSong.json()) as Song;
 		playerState.song.addedBy = "autoplay";
-		const lyrics = await getLyrics(playerState.song.id);
-		io.emit("lyricsResponse", lyrics);
+		io.emit("lyricsResponse");
 		io.emit("playerState", playerState);
 	} else {
 		switch (playerState.loop) {
@@ -116,8 +102,7 @@ const nextSong = async () => {
 				playerState.currentTime = 0;
 				playerState.song = playerState.queue.shift() || null;
 				if (playerState.song) {
-					const lyrics = await getLyrics(playerState.song.id);
-					io.emit("lyricsResponse", lyrics);
+					io.emit("lyricsResponse");
 				}
 				io.emit("playerState", playerState);
 				break;
@@ -126,8 +111,7 @@ const nextSong = async () => {
 				playerState.queue.push(playerState.song);
 				playerState.song = playerState.queue.shift() || null;
 				if (playerState.song) {
-					const lyrics = await getLyrics(playerState.song.id);
-					io.emit("lyricsResponse", lyrics);
+					io.emit("lyricsResponse");
 				}
 				io.emit("playerState", playerState);
 				break;
@@ -149,6 +133,7 @@ setInterval(async () => {
 		}
 	} else if (!playerState.song) {
 		playerState.currentTime = 0;
+		playerState.playing = false;
 	}
 }, 500);
 
@@ -405,7 +390,6 @@ io.on("connection", async (socket) => {
 					io.emit("playerState", playerState);
 					break;
 				case "removeSong":
-					console.log(song);
 					await sendSystemMessage(`${user.global_name} removed ${song?.title}!`);
 					playerState.queue = playerState.queue.filter((s) => s.id !== song?.id);
 					io.emit("playerState", playerState);
@@ -419,8 +403,7 @@ io.on("connection", async (socket) => {
 							playerState.song = song;
 							playerState.playing = true;
 							playerState.currentTime = 0;
-							const lyrics = await getLyrics(playerState.song?.id!);
-							io.emit("lyricsResponse", lyrics);
+							io.emit("lyricsResponse");
 						}
 					} else {
 						playerState.queue.push(song!);
@@ -435,9 +418,8 @@ io.on("connection", async (socket) => {
 		}
 	);
 
-	socket.on("lyricsRequest", async (_id: string) => {
-		const lyrics = await getLyrics(_id);
-		socket.emit("lyricsResponse", lyrics);
+	socket.on("lyricsRequest", async () => {
+		socket.emit("lyricsResponse");
 	});
 
 	socket.on("disconnecting", () => {

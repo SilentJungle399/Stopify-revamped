@@ -10,6 +10,8 @@ export default defineStore("player", () => {
 	const loop = ref(1);
 	const volume = ref(100);
 
+	const progress = ref(0);
+
 	const events = {
 		onStateChange: (event: any) => {
 			// -1 (unstarted)
@@ -56,6 +58,7 @@ export default defineStore("player", () => {
 		setInterval(() => {
 			if (YTplayer.value.getCurrentTime && current) {
 				const currentPos = YTplayer.value.getCurrentTime();
+				progress.value = currentPos;
 				const duration = YTplayer.value.getDuration();
 				seekbar.setProgress((currentPos / duration) * 100, true);
 			} else {
@@ -137,6 +140,7 @@ export default defineStore("player", () => {
 		autoplay,
 		loop,
 		volume,
+		progress,
 		play,
 		pause,
 		seek,
