@@ -15,7 +15,7 @@
 						class="message-content"
 						:style="
 							msg.user.id === '0'
-								? `background-color: #202339; margin-left: 30px; height: 30px; border-radius: 5px; `
+								? `background-color: #202339; margin-left: 30px; height: 30px; border-radius: 5px; position: relative;`
 								: ''
 						"
 					>
@@ -32,6 +32,9 @@
 							"
 						>
 							{{ msg.content }}
+						</div>
+						<div class="system-msg-time" v-if="msg.user.id === '0'">
+							{{ formatDate(msg.timestamp) }}
 						</div>
 					</div>
 				</div>
@@ -239,5 +242,15 @@ span {
 
 .login:hover {
 	background-color: #23263e;
+}
+
+.system-msg-time {
+	position: absolute;
+	color: gray;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: small;
+	margin: auto 0;
+	left: 10px;
+	top: 8px;
 }
 </style>
