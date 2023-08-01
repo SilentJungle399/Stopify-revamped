@@ -1,10 +1,18 @@
-# Nuxt 3 Minimal Starter
+# Stopify Revamped
 
 Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
 ## Setup
 
 Make sure to install the dependencies:
+
+For Backend:
+
+```bash
+pip install -r requirements.txt
+```
+
+For Frontend:
 
 ```bash
 # yarn
@@ -19,10 +27,14 @@ pnpm install
 
 ## Development Server
 
-Start the development server on `http://localhost:3000`
+Start the development server on `http://localhost:3000` and the backend server on `http://localhost:8080`:
 
 ```bash
-npm run dev
+npm run dev # nuxt server
+```
+
+```bash
+npm run yt # backend server
 ```
 
 ## Production
