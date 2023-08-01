@@ -12,3 +12,5 @@ dist
 config.json
 fix
 test.*
+package-lock.json
+yarn.lock
