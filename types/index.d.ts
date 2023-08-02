@@ -42,6 +42,7 @@ interface Song {
 	id: string;
 	type?: "video" | "song";
 	category?: string;
+	explicit?: boolean
 }
 
 interface PartialMessage {

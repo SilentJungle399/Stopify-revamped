@@ -68,7 +68,7 @@ const formatDate = (timestamp: number) => {
 	return moment(timestamp).calendar();
 };
 
-onMounted(() => {
+onMounted(() => {	
 	const elem = document.getElementById("chat");
 	if (elem) {
 		elem.scrollTop = elem.scrollHeight;
@@ -79,8 +79,31 @@ onMounted(() => {
 			elem.scrollTop = elem.scrollHeight;
 		}
 	}, 2000);
-	$io.on("newIncomingMessage", (message: any) => {
+
+	const isHere = ref(true)
+	window.addEventListener('blur', () => isHere.value = false)
+	window.addEventListener('focus', () => isHere.value = true)
+	
+	$io.on("newIncomingMessage", async (message: any) => {
+		// Send message notification, ignore self/system messages
+		// And send only when the tab isn't focused
+		if (![0, user.value?.id].includes(message?.user?.id) && message.content && !isHere.value) {
+			if ("Notification" in window) {
+				if (Notification.permission == 'default') {
+					await Notification.requestPermission()
+				}
+				
+				if (window.Notification.permission == "granted") {
+					new Notification(`${message.user.username} - Stopify`, {
+						body: message.content,
+						icon: `https://cdn.discordapp.com/avatars/${message.user?.id}/${message.user?.avatar}`,
+					})
+				}
+			}	
+		}
+
 		const elem = document.getElementById("chat");
+		
 		if (elem && elem.scrollHeight - (elem.scrollTop + elem.clientHeight) < 400) {
 			setTimeout(() => {
 				elem.scrollTop = elem.scrollHeight;
