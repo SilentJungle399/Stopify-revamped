@@ -87,19 +87,27 @@ onMounted(() => {
 	$io.on("newIncomingMessage", async (message: any) => {
 		// Send message notification, ignore self/system messages
 		// And send only when the tab isn't focused
-		if (![0, user.value?.id].includes(message?.user?.id) && message.content && !isHere.value) {
+		if (![undefined, "", "0", 0, user.value?.id].includes(message?.user?.id) && message.content && !isHere.value) {
 			if ("Notification" in window) {
-				if (Notification.permission == 'default') {
+				if (Notification.permission == "default") {
 					await Notification.requestPermission()
 				}
 				
 				if (window.Notification.permission == "granted") {
-					new Notification(`${message.user.username} - Stopify`, {
+					const notification = new Notification(`${message.user.username} - Stopify`, {
 						body: message.content,
 						icon: `https://cdn.discordapp.com/avatars/${message.user?.id}/${message.user?.avatar}`,
 					})
+
+					notification.onclick = function () {
+						// Focus on the window
+						window.focus()
+
+						// Close notification
+						this.close()
+					} 
 				}
-			}	
+			}
 		}
 
 		const elem = document.getElementById("chat");

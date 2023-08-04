@@ -20,12 +20,6 @@ route = web.RouteTableDef()
 spotify_auth = {}
 
 def format_result(song):
-	explicit = False
-	try:
-		explicit = song['isExplicit']
-	except KeyError:
-		pass;
-	
 	return {
 		"title": song['title'],
 		"artist": song['artists'][0]['name'],
@@ -36,7 +30,7 @@ def format_result(song):
 		"id": song['videoId'],
 		"category": song['category'],
 		"type": song['resultType'],
-		"explicit": explicit
+		"explicit": song.get("isExplicit", False)
 	}
 
 def format_lyrics(lyrics):
