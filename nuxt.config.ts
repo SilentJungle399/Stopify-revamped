@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 					href: "/theme.css",
 				},
 			],
-			title: "Stopify",
+			title: "JamSpace",
 		},
 	},
 	ssr: false,

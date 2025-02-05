@@ -94,7 +94,7 @@ onMounted(() => {
 				}
 				
 				if (window.Notification.permission == "granted") {
-					const notification = new Notification(`${message.user.username} - Stopify`, {
+					const notification = new Notification(`${message.user.username} - JamSpace`, {
 						body: message.content,
 						icon: `https://cdn.discordapp.com/avatars/${message.user?.id}/${message.user?.avatar}`,
 					})

@@ -12,7 +12,7 @@ from ytmusicapi import YTMusic
 config = json.load(open('config.json'))
 
 ytmusic = YTMusic()
-db = motor.motor_asyncio.AsyncIOMotorClient().stopify
+db = motor.motor_asyncio.AsyncIOMotorClient().jam
 
 app = web.Application()
 route = web.RouteTableDef()
